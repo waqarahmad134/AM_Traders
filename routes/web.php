@@ -4,6 +4,7 @@ use App\Http\Controllers\DipController;
 use App\Http\Controllers\FuelController;
 use App\Http\Controllers\MobilOilController;
 use App\Http\Controllers\PurchaseRecordController;
+use App\Http\Controllers\SaleRecordController;
 use App\Http\Controllers\ShiftDataController;
 use App\Http\Controllers\StockTestingController;
 use App\Http\Controllers\StockWastageController;
@@ -89,7 +90,16 @@ Route::post('add_user', [App\Http\Controllers\UserController::class, 'add_user']
 Route::get('create_invoice', [App\Http\Controllers\UserController::class, 'create_invoice'])->name('create_invoice');
 Route::post('invoice.store', [App\Http\Controllers\UserController::class, 'store_invoice'])->name('invoice.store');
 
+// Sale record
+Route::get('sale_record', [App\Http\Controllers\SaleRecordController::class, 'index'])->name('sale_record.index');
+Route::post('sale_record', [App\Http\Controllers\SaleRecordController::class, 'store'])->name('sale_record.store');
+Route::get('sale_record/update_status/{id}', [App\Http\Controllers\SaleRecordController::class, 'updateStatus'])->name('sale_record.updateStatus');
+Route::put('sale_record/{id}', [App\Http\Controllers\SaleRecordController::class, 'update'])->name('sale_record.update');
+Route::delete('sale_record/{id}', [App\Http\Controllers\SaleRecordController::class, 'destroy'])->name('sale_record.delete');
+
+
 // purchase record
+
 Route::get('purchase_record', [App\Http\Controllers\PurchaseRecordController::class, 'index'])->name('purchase_record.index');
 Route::post('purchase_record', [App\Http\Controllers\PurchaseRecordController::class, 'store'])->name('purchase_record.store');
 Route::get('purchase_record/update_status/{id}', [App\Http\Controllers\PurchaseRecordController::class, 'updateStatus'])->name('purchase_record.updateStatus');

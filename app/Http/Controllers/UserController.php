@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\SaleReport;
 use App\Models\User;
+use App\Models\Stock;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Guzzle\Http\Exception\ClientErrorResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Cookie;
 
@@ -338,12 +344,141 @@ class UserController extends Controller
     }
 
 
+    // public function store_invoice(Request $request)
+    // {
+    //     // Determine user_id
+    //     $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
+    //         ? $request->input('user_id')
+    //         : null;
+
+    //     // Determine item source
+    //     $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
+    //     $itemName = $request->input('new_item_name') ?? $request->input('item_name');
+
+    //     // Fallback if selecting from existing list
+    //     if (!$itemCode || !$itemName) {
+    //         $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item Name"
+    //         if ($selectedText && strpos($selectedText, '-') !== false) {
+    //             [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
+    //         }
+    //     }
+
+    //     $qty = (int) $request->input('qty');
+    //     $foc = (int) $request->input('foc', 0);
+
+    //     // 🔍 Check stock
+    //     $stock = Stock::where('item_code', $itemCode)->first();
+
+    //     if (!$stock) {
+    //         return redirect()->back()->with('error', "Stock record not found for item code: $itemCode");
+    //     }
+
+    //     if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
+    //         return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
+    //     }
+
+    //     // ✅ Store sale report
+    //     SaleReport::create([
+    //         'user_id' => $userId,
+    //         'item_code' => $itemCode,
+    //         'item_name' => $itemName,
+    //         'sale_qty' => $qty,
+    //         'foc' => $foc,
+    //         'sale_rate' => $request->input('rate'),
+    //         'amount' => $request->input('amount'),
+    //         'pack_size' => null,
+    //     ]);
+
+    //     // 🔄 Update stock
+    //     $stock->in_stock -= $qty;
+    //     $stock->foc += $foc;  // Optional: only if you're tracking FOC separately
+    //     $stock->save();
+
+    //     return redirect()->back()->with('success', 'Invoice created successfully and stock updated.');
+    // }
+
+    
     public function store_invoice(Request $request)
     {
-        return $request->all();
-        $items = Item::all();
-        $users = User::where('userType', '!=', 'admin')->get();
+        try {
+            // Determine user_id
+            $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
+                ? $request->input('user_id')
+                : null;
+    
+            // Determine item source
+            $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
+            $itemName = $request->input('new_item_name') ?? $request->input('item_name');
+    
+            // Fallback from dropdown
+            if (!$itemCode || !$itemName) {
+                $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item"
+                if ($selectedText && strpos($selectedText, '-') !== false) {
+                    [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
+                }
+            }
+    
+            $qty = (int) $request->input('qty');
+            $foc = (int) $request->input('foc', 0);
+            $rate = $request->input('rate');
+            $amount = $request->input('amount');
+    
+            // Check stock
+            $stock = Stock::where('item_code', $itemCode)->first();
+    
+            if (!$stock) {
+                return redirect()->back()->with('error', "Stock not found for item code: $itemCode");
+            }
+    
+            if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
+                return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
+            }
+    
+            // Save sale report
+            $sale = SaleReport::create([
+                'user_id' => $userId,
+                'item_code' => $itemCode,
+                'item_name' => $itemName,
+                'sale_qty' => $qty,
+                'foc' => $foc,
+                'sale_rate' => $rate,
+                'amount' => $amount,
+                'pack_size' => null,
+            ]);
+    
+            // Update stock
+            $stock->in_stock -= $qty;
+            $stock->foc += $foc;
+            $stock->save();
+    
+            // Get customer name (optional)
+            $customer = $userId ? User::find($userId) : null;
+            $saleItems = SaleReport::where('user_id', $userId)->get();
 
-        return view('create_invoice', compact('items', 'users'));
+            // Create PDF from Blade template
+            $pdf = Pdf::loadView('invoice_pdf', [
+                'invoice' => (object)[
+                    'id' => $saleItems->first()?->id ?? 0,
+                    'user' => $customer,
+                    'created_at' => $saleItems->first()?->created_at ?? now(),
+                    'items' => $saleItems,
+                ],
+                'customer' => $customer,
+                'invoice_no' => 'INV-' . Str::padLeft($saleItems->first()?->id ?? 0, 5, '0'),
+                'date' => now()->format('d-m-Y'),
+            ]);
+    
+            // Save to storage/app/invoices/
+            $filename = 'invoice_' . $sale->id . '.pdf';
+            Storage::makeDirectory('invoices');
+
+            $pdf->save(storage_path('app/invoices/' . $filename));
+    
+            return redirect()->back()->with('success', 'Invoice created and PDF generated.');
+        } catch (\Exception $e) {
+            Log::error('Invoice Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
+        }
     }
+    
 }

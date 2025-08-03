@@ -195,6 +195,7 @@
                                 <span>Stock</span></a>
                             <ul>
                                 <li class="@if(\Request::route()->getName() == 'purchase_record' ) active @endif"><a href="{{ route('purchase_record.index') }}">Purchase Record</a></li>
+                                <li class="@if(\Request::route()->getName() == 'sale_record' ) active @endif"><a href="{{ route('sale_record.index') }}">Sale Record</a></li>
                                 <li class="@if(\Request::route()->getName() == 'stock' ) active @endif"><a href="{{ route('stock.index') }}">Stock Listing</a></li>
                             </ul>
                         </li>

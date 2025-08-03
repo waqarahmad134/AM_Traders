@@ -36,6 +36,8 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <input type="hidden" name="item_code" id="hiddenItemCode">
+                            <input type="hidden" name="item_name" id="hiddenItemName">
 
                             <div id="newUserFields" style="display: none;">
                                 <h6>Create New User</h6>
@@ -156,6 +158,32 @@
             toggleBtn.textContent = '← Select From Entries';
         }
     });
+
+
+    document.getElementById('itemInput').addEventListener('input', function () {
+    const value = this.value.toLowerCase();
+    const datalist = document.getElementById('itemsList');
+    const options = datalist.options;
+
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value.toLowerCase() === value) {
+            const code = options[i].getAttribute('data-code');
+            const name = options[i].value.split(' - ')[1] || '';
+
+            document.getElementById('selectedItemName').textContent = name;
+            document.getElementById('selectedItemCode').textContent = code;
+
+            document.getElementById('hiddenItemCode').value = code;
+            document.getElementById('hiddenItemName').value = name;
+
+            document.getElementById('itemDetails').style.display = 'block';
+            break;
+        }
+    }
+});
+
 </script>
+
+
 
 @endsection

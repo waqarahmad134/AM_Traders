@@ -58,23 +58,7 @@
         <div class="row">
             <div class="col-md-9 col-lg-9">
                 <div class="row" style="row-gap: 10px">
-                    <div class="col-md-4 col-lg-4">
-                        <div class="card shadow-lg dashboard-cards ">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h5 class="card-title">Fuel Types</h5>
-                                    </div>
-                                    <div>
-                                        <img src="{{asset('/public/1.png')}}" width="60" alt="">
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="card-text"> {{ "0" }} </h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="col-md-4 col-lg-4">
                         <div class="card shadow-lg dashboard-cards">
                             <div class="card-body">
