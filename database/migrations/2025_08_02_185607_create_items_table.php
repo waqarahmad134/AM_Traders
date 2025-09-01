@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('item_name');
             $table->string('item_code')->unique();
-            $table->string('status')->default('active'); // e.g. active/inactive
+            $table->string('status')->default('active'); 
             $table->timestamps();
         });
     }

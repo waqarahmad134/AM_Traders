@@ -344,157 +344,62 @@ class UserController extends Controller
     }
 
 
-    // public function store_invoice(Request $request)
-    // {
-    //     // Determine user_id
-    //     $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
-    //         ? $request->input('user_id')
-    //         : null;
-
-    //     // Determine item source
-    //     $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
-    //     $itemName = $request->input('new_item_name') ?? $request->input('item_name');
-
-    //     // Fallback if selecting from existing list
-    //     if (!$itemCode || !$itemName) {
-    //         $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item Name"
-    //         if ($selectedText && strpos($selectedText, '-') !== false) {
-    //             [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
-    //         }
-    //     }
-
-    //     $qty = (int) $request->input('qty');
-    //     $foc = (int) $request->input('foc', 0);
-
-    //     // 🔍 Check stock
-    //     $stock = Stock::where('item_code', $itemCode)->first();
-
-    //     if (!$stock) {
-    //         return redirect()->back()->with('error', "Stock record not found for item code: $itemCode");
-    //     }
-
-    //     if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
-    //         return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
-    //     }
-
-    //     // ✅ Store sale report
-    //     SaleReport::create([
-    //         'user_id' => $userId,
-    //         'item_code' => $itemCode,
-    //         'item_name' => $itemName,
-    //         'sale_qty' => $qty,
-    //         'foc' => $foc,
-    //         'sale_rate' => $request->input('rate'),
-    //         'amount' => $request->input('amount'),
-    //         'pack_size' => null,
-    //     ]);
-
-    //     // 🔄 Update stock
-    //     $stock->in_stock -= $qty;
-    //     $stock->foc += $foc;  // Optional: only if you're tracking FOC separately
-    //     $stock->save();
-
-    //     return redirect()->back()->with('success', 'Invoice created successfully and stock updated.');
-    // }
-
-    
-    // public function store_invoice(Request $request)
-    // {
-    //     try {
-    //         // Determine user_id
-    //         $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
-    //             ? $request->input('user_id')
-    //             : null;
-    
-    //         // Determine item source
-    //         $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
-    //         $itemName = $request->input('new_item_name') ?? $request->input('item_name');
-    
-    //         // Fallback from dropdown
-    //         if (!$itemCode || !$itemName) {
-    //             $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item"
-    //             if ($selectedText && strpos($selectedText, '-') !== false) {
-    //                 [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
-    //             }
-    //         }
-    
-    //         $qty = (int) $request->input('qty');
-    //         $foc = (int) $request->input('foc', 0);
-    //         $rate = $request->input('rate');
-    //         $amount = $request->input('amount');
-    
-    //         // Check stock
-    //         $stock = Stock::where('item_code', $itemCode)->first();
-    
-    //         if (!$stock) {
-    //             return redirect()->back()->with('error', "Stock not found for item code: $itemCode");
-    //         }
-    
-    //         if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
-    //             return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
-    //         }
-    
-    //         // Save sale report
-    //         $sale = SaleReport::create([
-    //             'user_id' => $userId,
-    //             'item_code' => $itemCode,
-    //             'item_name' => $itemName,
-    //             'sale_qty' => $qty,
-    //             'foc' => $foc,
-    //             'sale_rate' => $rate,
-    //             'amount' => $amount,
-    //             'pack_size' => null,
-    //         ]);
-    
-    //         // Update stock
-    //         $stock->in_stock -= $qty;
-    //         $stock->foc += $foc;
-    //         $stock->save();
-    
-    //         // Get customer name (optional)
-    //         $customer = $userId ? User::find($userId) : null;
-    //         $saleItems = SaleReport::where('user_id', $userId)->get();
-
-    //         // Create PDF from Blade template
-    //         $pdf = Pdf::loadView('invoice_pdf', [
-    //             'invoice' => (object)[
-    //                 'id' => $saleItems->first()?->id ?? 0,
-    //                 'user' => $customer,
-    //                 'created_at' => $saleItems->first()?->created_at ?? now(),
-    //                 'items' => $saleItems,
-    //             ],
-    //             'customer' => $customer,
-    //             'invoice_no' => 'INV-' . Str::padLeft($saleItems->first()?->id ?? 0, 5, '0'),
-    //             'date' => now()->format('d-m-Y'),
-    //         ]);
-    
-    //         // Save to storage/app/invoices/
-    //         $filename = 'invoice_' . $sale->id . '.pdf';
-    //         Storage::makeDirectory('invoices');
-
-    //         $pdf->save(storage_path('app/invoices/' . $filename));
-    
-    //         return redirect()->back()->with('success', 'Invoice created and PDF generated.');
-    //     } catch (\Exception $e) {
-    //         Log::error('Invoice Error: ' . $e->getMessage());
-    //         return redirect()->back()->with('error', 'Something went wrong. Please try again.');
-    //     }
-    // }
-    
-
     public function store_invoice(Request $request)
     {
         try {
-            $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
-                ? $request->input('user_id')
-                : null;
+            if ($request->filled('user_id') && $request->input('user_id') !== 'new_user') {
+                $userId = $request->input('user_id');
+                $customer = User::find($userId);
+            } else {
+                // Runtime user creation
+                $validator = Validator::make($request->all(), [
+                    'name'    => 'required|string|max:255',
+                    'contact' => 'nullable|string|max:20',
+                    'email'   => 'nullable|email|unique:users,email',
+                ]);
+            
+                if ($validator->fails()) {
+                    return redirect()->back()
+                        ->withErrors($validator)
+                        ->withInput()
+                        ->with('error', 'Validation failed. Please check the form fields.');
+                }
+
+                $prefix = strtoupper(substr(str_replace(' ', '', $request->name), 0, 2));
+                $lastCustomer = User::where('customer_id', 'like', $prefix . '%')
+                    ->orderBy('customer_id', 'desc')
+                    ->first();
+
+                if ($lastCustomer) {
+                    $lastNumber = (int) substr($lastCustomer->customer_id, -3);
+                    $nextNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+                } else {
+                    $nextNumber = "001";
+                }
+            
+                $customer = new User();
+                $customer->name       = $request->name;
+                $customer->username   = strtolower(str_replace(' ', '.', $request->name)) . rand(100,999);
+                $customer->email      = $request->email;
+                $customer->customer_id   = $prefix . $nextNumber;
+                $customer->contact    = $request->contact;
+                $customer->ntn_strn   = $request->ntn_strn;
+                $customer->license_no = $request->license_no;
+                $customer->address    = $request->address;
+                $customer->usertype   = 'customer';
+                $customer->password   = Hash::make(Str::random(8)); // auto password
+                $customer->save();
+            
+                $userId = $customer->id;
+            }
+            
 
             $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
             $itemName = $request->input('new_item_name') ?? $request->input('item_name');
 
             // Fallback from dropdown
             if (!$itemCode || !$itemName) {
-                $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item"
+                $selectedText = $request->input('itemInput');  
                 if ($selectedText && strpos($selectedText, '-') !== false) {
                     [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
                 }
@@ -564,11 +469,46 @@ class UserController extends Controller
                 ->whereDate('created_at', $sale->created_at->toDateString())
                 ->update(['pdf_path' => $pdfPath]);
 
-            return redirect()->back()->with('success', 'Invoice created and PDF generated.');
+            return redirect()->back()->with('info', 'Invoice created and PDF generated.');
         } catch (\Exception $e) {
             Log::error('Invoice Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
+
+    public function items()
+    {
+        $data = Item::all();
+        return view('items', ['items' => $data]);
+    }
+
+    public function store_items(Request $request)
+{
+    // ✅ Validate input
+    $validated = $request->validate([
+        'item_name' => 'required|string|max:255',
+        'item_code' => 'required|string|max:50|unique:items,item_code',
+        'status'    => 'required|in:active,inactive',
+    ]);
+
+    try {
+        $item = new Item();
+        $item->item_name = $validated['item_name'];
+        $item->item_code = $validated['item_code'];
+        $item->status    = $validated['status'];
+        $item->save();
+
+        return redirect()->route('items')
+                         ->with('info', 'Item added successfully');
+
+    } catch (\Exception $e) {
+        // Log error for debugging
+        \Log::error('Item store failed: '.$e->getMessage());
+
+        return redirect()->back()
+                         ->withInput()
+                         ->with('error', 'Failed to add item. Please try again.');
+    }
+}
 
 }

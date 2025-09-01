@@ -31,7 +31,7 @@ class ItemSeeder extends Seeder
             DB::table('items')->insert([
                 'item_code' => $item['code'],
                 'item_name' => $item['name'],
-                'status' => 1,
+                'status' => "active",
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

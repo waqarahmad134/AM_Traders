@@ -43,7 +43,7 @@
                                 <h6>Create New User</h6>
                                 <div class="row">
                                     <div class="col-4 my-2">
-                                        <input type="text" name="name" class="form-control" placeholder="User Name">
+                                        <input type="text" name="name" class="form-control" placeholder="Name">
                                     </div>
                                     <div class="col-4 my-2">
                                         <input type="text" name="contact" class="form-control" placeholder="03214141410">
@@ -54,7 +54,10 @@
                                     <div class="col-4 my-2">
                                         <input type="text" name="license_no" class="form-control" placeholder="license_no">
                                     </div>
-                                    <div class="col-8 my-2">
+                                    <div class="col-4 my-2">
+                                        <input type="email" name="email" class="form-control" placeholder="Email (optional)">
+                                    </div>
+                                    <div class="col-4 my-2">
                                         <input type="text" name="address" class="form-control" placeholder="address">
                                     </div>
                                 </div>
