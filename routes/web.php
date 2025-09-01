@@ -88,6 +88,9 @@ Route::get('update_status/{id}', [App\Http\Controllers\UserController::class, 'u
 Route::post('add_user', [App\Http\Controllers\UserController::class, 'add_user'])->name('add_user');
 
 Route::get('create_invoice', [App\Http\Controllers\UserController::class, 'create_invoice'])->name('create_invoice');
+Route::get('invoice_pdf', function () {
+    return view('invoice_pdf'); 
+})->name('invoice_pdf');
 Route::post('invoice.store', [App\Http\Controllers\UserController::class, 'store_invoice'])->name('invoice.store');
 
 // Sale record

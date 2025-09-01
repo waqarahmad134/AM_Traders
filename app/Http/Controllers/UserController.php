@@ -398,18 +398,100 @@ class UserController extends Controller
     // }
 
     
+    // public function store_invoice(Request $request)
+    // {
+    //     try {
+    //         // Determine user_id
+    //         $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
+    //             ? $request->input('user_id')
+    //             : null;
+    
+    //         // Determine item source
+    //         $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
+    //         $itemName = $request->input('new_item_name') ?? $request->input('item_name');
+    
+    //         // Fallback from dropdown
+    //         if (!$itemCode || !$itemName) {
+    //             $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item"
+    //             if ($selectedText && strpos($selectedText, '-') !== false) {
+    //                 [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
+    //             }
+    //         }
+    
+    //         $qty = (int) $request->input('qty');
+    //         $foc = (int) $request->input('foc', 0);
+    //         $rate = $request->input('rate');
+    //         $amount = $request->input('amount');
+    
+    //         // Check stock
+    //         $stock = Stock::where('item_code', $itemCode)->first();
+    
+    //         if (!$stock) {
+    //             return redirect()->back()->with('error', "Stock not found for item code: $itemCode");
+    //         }
+    
+    //         if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
+    //             return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
+    //         }
+    
+    //         // Save sale report
+    //         $sale = SaleReport::create([
+    //             'user_id' => $userId,
+    //             'item_code' => $itemCode,
+    //             'item_name' => $itemName,
+    //             'sale_qty' => $qty,
+    //             'foc' => $foc,
+    //             'sale_rate' => $rate,
+    //             'amount' => $amount,
+    //             'pack_size' => null,
+    //         ]);
+    
+    //         // Update stock
+    //         $stock->in_stock -= $qty;
+    //         $stock->foc += $foc;
+    //         $stock->save();
+    
+    //         // Get customer name (optional)
+    //         $customer = $userId ? User::find($userId) : null;
+    //         $saleItems = SaleReport::where('user_id', $userId)->get();
+
+    //         // Create PDF from Blade template
+    //         $pdf = Pdf::loadView('invoice_pdf', [
+    //             'invoice' => (object)[
+    //                 'id' => $saleItems->first()?->id ?? 0,
+    //                 'user' => $customer,
+    //                 'created_at' => $saleItems->first()?->created_at ?? now(),
+    //                 'items' => $saleItems,
+    //             ],
+    //             'customer' => $customer,
+    //             'invoice_no' => 'INV-' . Str::padLeft($saleItems->first()?->id ?? 0, 5, '0'),
+    //             'date' => now()->format('d-m-Y'),
+    //         ]);
+    
+    //         // Save to storage/app/invoices/
+    //         $filename = 'invoice_' . $sale->id . '.pdf';
+    //         Storage::makeDirectory('invoices');
+
+    //         $pdf->save(storage_path('app/invoices/' . $filename));
+    
+    //         return redirect()->back()->with('success', 'Invoice created and PDF generated.');
+    //     } catch (\Exception $e) {
+    //         Log::error('Invoice Error: ' . $e->getMessage());
+    //         return redirect()->back()->with('error', 'Something went wrong. Please try again.');
+    //     }
+    // }
+    
+
     public function store_invoice(Request $request)
     {
         try {
-            // Determine user_id
             $userId = $request->filled('user_id') && $request->input('user_id') !== 'new_user'
                 ? $request->input('user_id')
                 : null;
-    
-            // Determine item source
+
             $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
             $itemName = $request->input('new_item_name') ?? $request->input('item_name');
-    
+
             // Fallback from dropdown
             if (!$itemCode || !$itemName) {
                 $selectedText = $request->input('itemInput');  // e.g., "ABC123 - Some Item"
@@ -417,23 +499,23 @@ class UserController extends Controller
                     [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
                 }
             }
-    
+
             $qty = (int) $request->input('qty');
             $foc = (int) $request->input('foc', 0);
             $rate = $request->input('rate');
             $amount = $request->input('amount');
-    
+
             // Check stock
             $stock = Stock::where('item_code', $itemCode)->first();
-    
+
             if (!$stock) {
                 return redirect()->back()->with('error', "Stock not found for item code: $itemCode");
             }
-    
+
             if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
                 return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
             }
-    
+
             // Save sale report
             $sale = SaleReport::create([
                 'user_id' => $userId,
@@ -445,40 +527,48 @@ class UserController extends Controller
                 'amount' => $amount,
                 'pack_size' => null,
             ]);
-    
+
             // Update stock
             $stock->in_stock -= $qty;
             $stock->foc += $foc;
             $stock->save();
-    
-            // Get customer name (optional)
-            $customer = $userId ? User::find($userId) : null;
-            $saleItems = SaleReport::where('user_id', $userId)->get();
 
-            // Create PDF from Blade template
+            // Get customer info
+            $customer = $userId ? User::find($userId) : null;
+
+            // Get all sale items for this invoice (optional: filter by date/time if needed)
+            $saleItems = SaleReport::where('user_id', $userId)->whereDate('created_at', $sale->created_at->toDateString())->get();
+
+            // Generate PDF
             $pdf = Pdf::loadView('invoice_pdf', [
                 'invoice' => (object)[
-                    'id' => $saleItems->first()?->id ?? 0,
+                    'id' => $sale->id,
                     'user' => $customer,
-                    'created_at' => $saleItems->first()?->created_at ?? now(),
+                    'created_at' => $sale->created_at,
                     'items' => $saleItems,
                 ],
                 'customer' => $customer,
-                'invoice_no' => 'INV-' . Str::padLeft($saleItems->first()?->id ?? 0, 5, '0'),
+                'invoice_no' => 'INV-' . Str::padLeft($sale->id, 5, '0'),
                 'date' => now()->format('d-m-Y'),
             ]);
-    
-            // Save to storage/app/invoices/
-            $filename = 'invoice_' . $sale->id . '.pdf';
-            Storage::makeDirectory('invoices');
 
-            $pdf->save(storage_path('app/invoices/' . $filename));
-    
+            // Save PDF
+            $filename = 'invoice_' . $sale->id . '.pdf';
+            $pdfPath = 'invoices/' . $filename;
+
+            Storage::makeDirectory('invoices');
+            $pdf->save(storage_path('app/' . $pdfPath));
+
+            // Save PDF path to all related sale reports for this user on that day
+            SaleReport::where('user_id', $userId)
+                ->whereDate('created_at', $sale->created_at->toDateString())
+                ->update(['pdf_path' => $pdfPath]);
+
             return redirect()->back()->with('success', 'Invoice created and PDF generated.');
         } catch (\Exception $e) {
             Log::error('Invoice Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
-    
+
 }

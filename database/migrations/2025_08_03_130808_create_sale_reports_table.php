@@ -18,6 +18,7 @@ class CreateSaleReportsTable extends Migration
             $table->integer('foc')->default(0);
             $table->decimal('sale_rate', 10, 2);
             $table->decimal('amount', 12, 2);
+            $table->string('pdf_path')->nullable(); 
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

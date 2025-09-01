@@ -18,6 +18,7 @@ class SaleReport extends Model
         'foc',
         'sale_rate',
         'amount',
+        'pdf_path', 
     ];
 
     // Relationship: belongsTo User

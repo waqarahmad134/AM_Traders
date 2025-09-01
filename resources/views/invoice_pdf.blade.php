@@ -1,3 +1,39 @@
+<!-- @php
+    // Temporary invoice dummy values
+    $invoice = (object) [
+        'id' => rand(1000, 9999),
+        'created_at' => now(),
+        'user' => (object) [
+            'name' => 'Test Customer',
+            'contact' => '0300-1234567',
+            'ntn_strn' => '1234567-8',
+            'address' => '123 Model Town, Lahore',
+        ],
+        'items' => collect([
+            (object) [
+                'item_code' => 'P001',
+                'item_name' => 'Sample Product A',
+                'pack_size' => '1L',
+                'sale_qty' => 2,
+                'foc' => 0,
+                'sale_rate' => 500,
+                'amount' => 1000,
+            ],
+            (object) [
+                'item_code' => 'P002',
+                'item_name' => 'Sample Product B',
+                'pack_size' => '500ml',
+                'sale_qty' => 1,
+                'foc' => 1,
+                'sale_rate' => 300,
+                'amount' => 300,
+            ],
+        ]),
+    ];
+
+    $invoiceDate = $invoice->created_at->format('Y-m-d');
+    $currentTime = now()->format('H:i:s');
+@endphp -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,15 +46,45 @@
         .no-border { border: none; }
         .footer { text-align: center; font-size: 10px; margin-top: 20px; }
         .signature { margin-top: 50px; }
+        
     </style>
+    <style>
+@page {
+    margin: 20px 20px 40px 20px; /* top right bottom left */
+}
+.footer img {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
 </head>
 <body>
+<table style="width:100%; border:none; border-collapse:collapse;">
+    <tr>
+        <!-- Logo on the left -->
+        <td style="width:40%; text-align:left; vertical-align:middle; border:none;">
+            <img src="{{ public_path('assets/images/user.png') }}" 
+                 alt="Logo" 
+                 style="height:100px;">
+        </td>
 
-    <h2 style="text-align: center;">AM TRADERS</h2>
-    <p style="text-align: center;">66-Block B Model Town, Lahore, Pakistan<br>
-    0345-5170181 | amtraders123@gmail.com</p>
+        <!-- Company Info on the right -->
+        <td style="width:60%; text-align:right; vertical-align:middle; border:none;">
+            <h1 style="margin:0; font-size:22px;">AM TRADERS</h1>
+            <p style="margin:0; font-size:14px; line-height:1.4;">
+                66-Block B Model Town, Lahore, Pakistan<br>
+                0345-5170181 | amtraders123@gmail.com
+            </p>
+        </td>
+    </tr>
+</table>
 
-    <h3 style="background-color: #eee; padding: 5px;">Customer Detail</h3>
+
+</div>
+    <h3 style="text-align: center; background-color: #8ea9db; padding: 5px;font-size: 18px;">Customer Detail</h3>
     <table>
         <tr>
             <td>Customer Name: {{ $invoice->user->name }}</td>
@@ -36,7 +102,7 @@
         </tr>
     </table>
 
-    <h3 style="background-color: #eee; padding: 5px;">Invoice Detail</h3>
+    <h3 style="text-align: center; background-color: #8ea9db; padding: 5px;font-size: 18px;">Invoice Detail</h3>
     <table>
         <thead>
             <tr>
@@ -70,9 +136,12 @@
         </tbody>
     </table>
 
-    <p class="signature">Authorized Signature: ____________________</p>
+    <div class="footer">
+    <img src="{{ public_path('invoicefooter.png') }}" 
+     style="width:100%; height:auto; display:block; margin:0; padding:0;">
+    </div>
+    <!-- <p class="signature">Authorized Signature: ____________________</p> -->
 
-    <div class="footer">Thank you for your business!</div>
 
 </body>
 </html>
