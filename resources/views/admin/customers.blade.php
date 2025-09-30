@@ -84,11 +84,13 @@
                                                 <span>Block</span>
                                             @endif
                                         </td>
+
                                         <td>
+                                            <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ $d->id }}">Edit</button>
                                             @if($d->status == "active")
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger">Block</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger btn-sm">Block</a>
                                             @else
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success">Active</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success btn-sm">Active</a>
                                             @endif
                                         </td>
                                     </tr>
@@ -143,12 +145,12 @@
                     <div class="row">
                         <div class="col-md-6 col-lg-6">
                             <label for="passInput">Password</label>
-                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" required autocomplete="off">
+                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" autocomplete="off">
                             <input type="checkbox" id="showPass">&nbsp; Show Password
                         </div>
                         <div class="col-md-6">
                             <label>Customer ID</label>
-                            <input name="customer_id" type="text" class="form-control" placeholder="Enter Customer ID" required>
+                            <input name="customer_id" type="text" class="form-control" placeholder="Enter Customer ID">
                         </div>
                     </div>
                     <div class="row">
@@ -159,6 +161,16 @@
                         <div class="col-md-6">
                             <label>License No</label>
                             <input name="license_no" type="text" class="form-control" placeholder="Enter License No">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Area</label>
+                            <input name="area" type="text" class="form-control" placeholder="Area">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Address</label>
+                            <input name="address" type="text" class="form-control" placeholder="Enter Address">
                         </div>
                     </div>
                     <div class="form-group mt-3">
@@ -176,6 +188,8 @@
         </form>
     </div>
 </div>
+
+
 
 
 
@@ -233,5 +247,121 @@
 
 
 
+
+@foreach($data as $key => $d)
+<!-- Edit Modal for {{ $d->name }} -->
+<div class="modal fade" id="editModal{{ $d->id }}" tabindex="-1" role="dialog" aria-labelledby="editModalTitle{{ $d->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <form method="POST" id="editForm{{ $d->id }}" action="{{route('update_user', $d->id)}}" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle{{ $d->id }}">Edit Customer - {{ $d->name }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="editError{{ $d->id }}" class="alert alert-danger" style="display:none;"></div>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-6">
+                            <label>First Name</label>
+                            <input name="firstName" type="text" class="form-control" placeholder="Enter First Name Here" 
+                                   value="{{ explode(' ', $d->name)[0] ?? '' }}" required>
+                        </div>
+                        <div class="col-md-6 col-lg-6">
+                            <label>Last Name</label>
+                            <input name="lastName" type="text" class="form-control" placeholder="Enter Last name here" 
+                                   value="{{ explode(' ', $d->name, 2)[1] ?? '' }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-6">
+                            <label>Email</label>
+                            <input name="email" type="email" class="form-control" autocomplete="off" 
+                                   placeholder="Enter Email Address Here" value="{{ $d->email }}">
+                        </div>
+                        <div class="col-md-6 col-lg-6">
+                            <label>Phone</label>
+                            <input class="form-control tel" type="tel" name="leyka_donor_phone" inputmode="tel" 
+                                   value="{{ $d->contact }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 col-lg-6">
+                            <label for="editPassInput{{ $d->id }}">Password</label>
+                            <input name="password" type="password" id="editPassInput{{ $d->id }}" class="form-control" 
+                                   placeholder="Leave blank to keep current password" autocomplete="off">
+                            <input type="checkbox" id="editShowPass{{ $d->id }}">&nbsp; Show Password
+                        </div>
+                        <div class="col-md-6">
+                            <label>Customer ID</label>
+                            <input name="customer_id" type="text" class="form-control" 
+                                   placeholder="Enter Customer ID" value="{{ $d->customer_id }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>N.T.N / S.T.R.N</label>
+                            <input name="ntn_strn" type="text" class="form-control" 
+                                   placeholder="Enter NTN / STRN" value="{{ $d->ntn_strn }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label>License No</label>
+                            <input name="license_no" type="text" class="form-control" 
+                                   placeholder="Enter License No" value="{{ $d->license_no }}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Area</label>
+                            <input name="area" type="text" class="form-control" 
+                                   placeholder="Area" value="{{ $d->area }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Address</label>
+                            <input name="address" type="text" class="form-control" 
+                                   placeholder="Enter Address" value="{{ $d->address }}">
+                        </div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="usertype">User Type</label>
+                        <select name="usertype" class="form-control" required>
+                            <option value="customer" {{ $d->usertype == 'customer' ? 'selected' : '' }}>Customer</option>
+                            <option value="admin" {{ $d->usertype == 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="staff" {{ $d->usertype == 'staff' ? 'selected' : '' }}>Staff</option>
+                            <option value="supplier" {{ $d->usertype == 'supplier' ? 'selected' : '' }}>Supplier</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModel({{ $d->id }})" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update User</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endforeach
+
+<script>
+    // Close edit modal function
+    function closeEditModel(id) {
+        $('#editForm' + id)[0].reset();
+    }
+    
+    // Show/Hide Password functionality for edit modals
+    $(document).ready(function() {
+        $('[id^="editShowPass"]').change(function() {
+            var id = this.id.replace('editShowPass', '');
+            var passwordInput = $('#editPassInput' + id);
+            if (this.checked) {
+                passwordInput.attr('type', 'text');
+            } else {
+                passwordInput.attr('type', 'password');
+            }
+        });
+    });
+</script>
 
 @endsection

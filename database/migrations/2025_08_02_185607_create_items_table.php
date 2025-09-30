@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('items', function (Blueprint $table) {
             $table->id();
             $table->string('item_name');
-            $table->string('item_code')->unique();
+            $table->string('item_code')->nullable();
             $table->string('status')->default('active'); 
             $table->timestamps();
         });

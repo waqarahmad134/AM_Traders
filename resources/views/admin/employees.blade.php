@@ -47,8 +47,8 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="header d-flex justify-content-between pb-0 mb-0">
-                        <h2>User Management</h2>
-                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalCenter">Add New Staff</button>
+                        <h2>Employee Management</h2>
+                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalCenter">Add New Employee</button>
                     </div>
                     <div class="body">
                         <div class="table-responsive">
@@ -81,10 +81,11 @@
                                             @endif
                                         </td>
                                         <td>
+                                            <a href="{{ route('edit_user', ['id' => $d->id]) }}" class="btn btn-primary btn-sm">Edit</a>
                                             @if($d->status == "active")
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger">Block</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger btn-sm">Block</a>
                                             @else
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success">Active</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success btn-sm">Active</a>
                                             @endif
                                         </td>
                                     </tr>
@@ -108,7 +109,7 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalCenterTitle">Add Staff</h5>
+                    <h5 class="modal-title" id="exampleModalCenterTitle">Add Employee</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -128,26 +129,26 @@
                     <div class="row">
                         <div class="col-md-6 col-lg-6">
                             <label>Email</label>
-                            <input name="email" type="email" class="form-control" autocomplete="off" placeholder="Enter Email Address Here" required>
+                            <input name="email" type="email" class="form-control" autocomplete="off" placeholder="Enter Email Address Here">
                         </div>
                         <div class="col-md-6 col-lg-6">
                             <label>Phone</label>
 
-                            <input class="form-control tel" type="tel" name="leyka_donor_phone" inputmode="tel" value="" / required>
-                            <input class="form-control tel" id="countrycode" type="hidden" name="countrycode" value="" / required>
+                            <input class="form-control tel" type="tel" name="leyka_donor_phone" inputmode="tel" value="" / >
+                            <input class="form-control tel" id="countrycode" type="hidden" name="countrycode" value="" / >
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 col-lg-6">
                             <label for="passInput">Password</label>
-                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" required autocomplete="off">
+                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" autocomplete="off">
                             <input type="checkbox" id="showPass">&nbsp; Show Password
                         </div>
                     </div>
                     <div class="form-group mt-3">
                         <label for="usertype">User Type</label>
                         <select name="usertype" class="form-control" required>
-                            <option value="staff">Staff</option>
+                            <option value="employee">Employee</option>
                         </select>
                     </div>
                 </div>
@@ -175,31 +176,6 @@
 
 
 <script>
-   
-    $(document).ready(function() {
-        $('#example1').DataTable({
-            dom: 'Bfrtip',
-            buttons: [{
-                    extend: 'copy',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                },
-                {
-                    extend: 'csv',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                },
-                {
-                    extend: 'print',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                }
-            ]
-        });
-    });
     $(document).ready(function() {
         $('#showPass').on('click', function() {
             var passInput = $("#passInput");

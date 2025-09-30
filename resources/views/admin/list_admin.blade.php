@@ -88,10 +88,11 @@
                                         </td>
                                         <td>{{date('d,M Y h:i:s',strtotime($d->created_at))}}</td>
                                         <td>
+                                            <a href="{{ route('edit_user', ['id' => $d->id]) }}" class="btn btn-primary btn-sm">Edit</a>
                                             @if($d->status== "active")
-                                            <a href="{{route('update_status',['id'=>$d->id])}}" class="btn" style="background-color: #c70032; color: white;">Block</a>
+                                            <a href="{{route('update_status',['id'=>$d->id])}}" class="btn btn-sm" style="background-color: #c70032; color: white;">Block</a>
                                             @else
-                                            <a href="{{route('update_status',['id'=>$d->id])}}" class="btn" style="background-color: #002E63; color: white;">Active</a>
+                                            <a href="{{route('update_status',['id'=>$d->id])}}" class="btn btn-sm" style="background-color: #002E63; color: white;">Active</a>
                                             @endif
                                         </td>
                                     </tr>

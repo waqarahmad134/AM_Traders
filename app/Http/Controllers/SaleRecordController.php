@@ -11,6 +11,7 @@ class SaleRecordController extends Controller
     public function index()
     {
         $saleReports = SaleReport::with('user')->latest()->get();
+        // dd($saleReports);
         return view('sale_record', compact('saleReports'));
     }
 

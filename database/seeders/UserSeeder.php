@@ -12,13 +12,11 @@ class UserSeeder extends Seeder
     {
         User::create([
             'name' => 'Admin User',
-            'username' => 'admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('password'),
             'status' => 'active',
             'contact' => '03001234567',
             'address' => 'Lahore, Pakistan',
-            'usertype' => 'admin',
         ]);
 
         $customers = [
@@ -146,7 +144,6 @@ class UserSeeder extends Seeder
                 'ntn_strn' => $data['ntn_strn'],
                 'license_no' => $data['license_no'],
                 'email' => strtolower(str_replace(' ', '_', $data['customer_id'])) . '@demo.com',
-                'username' => strtolower(str_replace(' ', '_', $data['customer_id'])),
                 'usertype' => 'customer',
                 'password' => Hash::make('password'), 
             ]);

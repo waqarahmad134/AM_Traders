@@ -79,10 +79,11 @@
                                             @endif
                                         </td>
                                         <td>
+                                            <a href="{{ route('edit_user', ['id' => $d->id]) }}" class="btn btn-primary btn-sm">Edit</a>
                                             @if($d->status == "active")
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger">Block</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-danger btn-sm">Block</a>
                                             @else
-                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success">Active</a>
+                                                <a href="{{ route('update_status', ['id' => $d->id]) }}" class="btn btn-success btn-sm">Active</a>
                                             @endif
                                         </td>
                                     </tr>

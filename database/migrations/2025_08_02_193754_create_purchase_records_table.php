@@ -15,6 +15,8 @@ return new class extends Migration {
             $table->integer('purchase_qty');
             $table->decimal('sale_rate', 10, 2);
             $table->text('remarks')->nullable();
+            $table->text('batch_code')->nullable();
+            $table->date('expiry')->nullable();
             $table->timestamps();
 
             // Foreign key constraint

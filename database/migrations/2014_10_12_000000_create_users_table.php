@@ -19,14 +19,14 @@ return new class extends Migration
             $table->string('ntn_strn')->nullable(); 
             $table->string('license_no')->nullable(); 
             $table->string('name');
-            $table->string('username');
             $table->string('email')->unique()->nullable();
             $table->string('status')->default('active');
             $table->string('contact')->nullable();
+            $table->text('area')->nullable();
             $table->text('address')->nullable();
             $table->string('usertype')->default('customer'); 
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

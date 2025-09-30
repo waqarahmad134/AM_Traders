@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
 
 // users routes
 Route::get('customers', [App\Http\Controllers\UserController::class, 'customers'])->name('customers');
+Route::get('employees', [App\Http\Controllers\UserController::class, 'employees'])->name('employees');
 Route::get('customers_balance', [App\Http\Controllers\UserController::class, 'customers_balance'])->name('customers_balance');
 Route::get('staffs', [App\Http\Controllers\UserController::class, 'staffs'])->name('staffs');
 Route::get('staffs_balance', [App\Http\Controllers\UserController::class, 'staffs_balance'])->name('staffs_balance');
@@ -86,12 +87,14 @@ Route::get('suppliers', [App\Http\Controllers\UserController::class, 'suppliers'
 Route::get('list_admin', [App\Http\Controllers\UserController::class, 'list_admin'])->name('list_admin');
 Route::get('update_status/{id}', [App\Http\Controllers\UserController::class, 'update_status'])->name('update_status');
 Route::post('add_user', [App\Http\Controllers\UserController::class, 'add_user'])->name('add_user');
+Route::get('edit_user/{id}', [App\Http\Controllers\UserController::class, 'edit_user'])->name('edit_user');
+Route::post('update_user/{id}', [App\Http\Controllers\UserController::class, 'update_user'])->name('update_user');
 
 Route::get('create_invoice', [App\Http\Controllers\UserController::class, 'create_invoice'])->name('create_invoice');
 
-// Route::get('invoice_pdf', function () {
-//     return view('invoice_pdf'); 
-// })->name('invoice_pdf');
+Route::get('invoice_pdf', function () {
+    return view('invoice_pdf'); 
+})->name('invoice_pdf');
 
 Route::post('invoice.store', [App\Http\Controllers\UserController::class, 'store_invoice'])->name('invoice.store');
 
@@ -107,6 +110,7 @@ Route::delete('sale_record/{id}', [App\Http\Controllers\SaleRecordController::cl
 
 Route::get('purchase_record', [App\Http\Controllers\PurchaseRecordController::class, 'index'])->name('purchase_record.index');
 Route::post('purchase_record', [App\Http\Controllers\PurchaseRecordController::class, 'store'])->name('purchase_record.store');
+Route::get('purchase_record/edit/{id}', [App\Http\Controllers\PurchaseRecordController::class, 'edit'])->name('purchase_record.edit');
 Route::get('purchase_record/update_status/{id}', [App\Http\Controllers\PurchaseRecordController::class, 'updateStatus'])->name('purchase_record.updateStatus');
 Route::put('purchase_record/{id}', [App\Http\Controllers\PurchaseRecordController::class, 'update'])->name('purchase_record.update');
 Route::delete('purchase_record/{id}', [App\Http\Controllers\PurchaseRecordController::class, 'destroy'])->name('purchase_record.delete');

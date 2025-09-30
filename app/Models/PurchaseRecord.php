@@ -13,6 +13,10 @@ class PurchaseRecord extends Model
         'purchase_qty',
         'sale_rate',
         'remarks',
+        'batch_code',
+        'expiry',
+        'created_at', // ✅ allow overriding
+
     ];
 
     public function item()

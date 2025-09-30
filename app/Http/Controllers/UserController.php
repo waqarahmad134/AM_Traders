@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\SaleReport;
 use App\Models\User;
 use App\Models\Stock;
+use App\Models\PurchaseRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+
 use Cookie;
 
 class UserController extends Controller
@@ -34,6 +36,14 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         return view('admin.list_users', ['data' => $data]);
+    }
+
+    public function employees()
+    {
+        $data = User::where('usertype', 'employee')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('admin.employees', ['data' => $data]);
     }
 
     public function customers()
@@ -114,8 +124,7 @@ class UserController extends Controller
                 'lastName' => 'required|string|max:255',
                 'email' => 'nullable|email|unique:users,email',
                 'leyka_donor_phone' => 'nullable|string|max:20',
-                'password' => 'required|string|min:6',
-                'usertype' => 'required|in:admin,staff,customer,supplier',
+                'usertype' => 'required|in:admin,staff,customer,supplier,employee',
             ]);
 
             if ($validator->fails()) {
@@ -128,10 +137,11 @@ class UserController extends Controller
 
             $user = new User();
             $user->name = $request->firstName . ' ' . $request->lastName;
-            $user->username = strtolower($request->firstName . '.' . $request->lastName);
             $user->email = $request->email;
             $user->contact = $request->leyka_donor_phone;
             $user->usertype = $request->usertype;
+            $user->address = $request->address;
+            $user->area = $request->area;
             $user->password = Hash::make($request->password);
             $user->customer_id = $request->customer_id;
             $user->ntn_strn = $request->ntn_strn;
@@ -147,24 +157,67 @@ class UserController extends Controller
         }
     }
 
-    public function employees(Request $request)
+    public function edit_user($id)
     {
-        $client = new \GuzzleHttp\Client();
-        $request = $client->get(env('BASE_URL') . '/users/all/employees');
-        $response = $request->getBody()->getContents();
-        $data = json_decode($response);
+        $user = User::find($id);
+        
+        if (!$user) {
+            return redirect()->back()->with('error', 'User not found.');
+        }
 
-        // $arr = array();
+        return view('admin.edit_user', ['user' => $user]);
+    }
 
-        $url1 = env('BASE_URL') . '/users/all/active/roles';
-        $client1 = new \GuzzleHttp\Client();
-        $response1 = $client1->get($url1, [
-            'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json'],
-        ]);
-        $response1 = $response1->getBody()->getContents();
-        $data1 = json_decode($response1);
-        $roles1 = $data1->Response;
-        return view('admin.list_employee', ['data' => $data])->with('roles', $roles1);
+    public function update_user(Request $request, $id)
+    {
+        try {
+            $user = User::find($id);
+            
+            if (!$user) {
+                return redirect()->back()->with('error', 'User not found.');
+            }
+
+            $validator = Validator::make($request->all(), [
+                'firstName' => 'required|string|max:255',
+                'lastName' => 'required|string|max:255',
+                'email' => 'nullable|email|unique:users,email,' . $id,
+                'leyka_donor_phone' => 'nullable|string|max:20',
+                'usertype' => 'required|in:admin,staff,customer,supplier',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()
+                    ->back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('error', 'Validation failed. Please check the form fields.');
+            }
+
+            // Update user data
+            $user->name = $request->firstName . ' ' . $request->lastName;
+            $user->email = $request->email;
+            $user->contact = $request->leyka_donor_phone;
+            $user->usertype = $request->usertype;
+            $user->address = $request->address;
+            $user->area = $request->area;
+            $user->customer_id = $request->customer_id;
+            $user->ntn_strn = $request->ntn_strn;
+            $user->license_no = $request->license_no;
+            
+            // Only update password if provided
+            if ($request->filled('password')) {
+                $user->password = Hash::make($request->password);
+            }
+            
+            $user->save();
+
+            return redirect()->back()->with('success', 'User updated successfully!');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+        }
     }
 
     public function add_employee(Request $request)
@@ -339,142 +392,324 @@ class UserController extends Controller
     {
         $items = Item::all();
         $users = User::where('userType', '!=', 'admin')->get();
-
-        return view('create_invoice', compact('items', 'users'));
+        $stocks = Stock::all();
+        $saleReports = SaleReport::orderBy('created_at', 'desc')->get();
+        return view('create_invoice', compact('items', 'users', 'stocks', 'saleReports'));
     }
 
+
+    // public function store_invoice(Request $request)
+    // {
+    //     try {
+    //         // ✅ Step 1: Validate invoice date
+    //         $validator = Validator::make($request->all(), [
+    //             'invoice_date' => 'required|date',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return redirect()->back()
+    //                 ->withErrors($validator)
+    //                 ->withInput()
+    //                 ->with('error', 'Please select a valid invoice date.');
+    //         }
+
+    //         // ✅ Step 2: Handle customer (existing or new)
+    //         if ($request->filled('user_id') && $request->input('user_id') !== 'new_user') {
+    //             $userId = $request->input('user_id');
+    //             $customer = User::find($userId);
+    //         } else {
+    //             $validator = Validator::make($request->all(), [
+    //                 'name'    => 'required|string|max:255',
+    //                 'contact' => 'nullable|string|max:20',
+    //                 'email'   => 'nullable|email|unique:users,email',
+    //             ]);
+
+    //             if ($validator->fails()) {
+    //                 return redirect()->back()
+    //                     ->withErrors($validator)
+    //                     ->withInput()
+    //                     ->with('error', 'Validation failed. Please check the form fields.');
+    //             }
+
+    //             $prefix = strtoupper(substr(str_replace(' ', '', $request->name), 0, 2));
+    //             $lastCustomer = User::where('customer_id', 'like', $prefix . '%')
+    //                 ->orderBy('customer_id', 'desc')
+    //                 ->first();
+
+    //             $nextNumber = $lastCustomer
+    //                 ? str_pad(((int) substr($lastCustomer->customer_id, -3)) + 1, 3, '0', STR_PAD_LEFT)
+    //                 : "001";
+
+    //             $customer = new User();
+    //             $customer->name       = $request->name;
+    //             $customer->email      = $request->email;
+    //             $customer->customer_id   = $prefix . $nextNumber;
+    //             $customer->contact    = $request->contact;
+    //             $customer->ntn_strn   = $request->ntn_strn;
+    //             $customer->license_no = $request->license_no;
+    //             $customer->address    = $request->address;
+    //             $customer->usertype   = 'customer';
+    //             $customer->password   = Hash::make(Str::random(8));
+    //             $customer->save();
+
+    //             $userId = $customer->id;
+    //         }
+
+    //         // ✅ Step 3: Get invoice date
+    //         $invoiceDate = $request->input('invoice_date', now()->format('Y-m-d'));
+            
+    //         // ✅ Step 4: Generate permanent invoice number starting from 330
+    //         // Get the highest invoice number from all sale reports
+    //         $maxInvoiceNumber = SaleReport::whereNotNull('invoice_number')
+    //             ->max('invoice_number');
+            
+    //         // Start from 330 if no invoices exist, otherwise increment from highest
+    //         $invoiceNumber = $maxInvoiceNumber ? $maxInvoiceNumber + 1 : 330;
+
+    //         // ✅ Step 5: Loop through items
+    //         $saleItems = [];
+    //         $totalTax = 0;
+    //         $totalAmount = 0;
+    //         $previousBalance = $request->input('previous_balance', 0);
+
+    //         foreach ($request->items as $rawItem) {
+    //             $itemData = json_decode($rawItem, true);
+
+    //             if (!$itemData) {
+    //                 continue;
+    //             }
+
+    //             $itemName = $itemData['itemName'];
+    //             $qty      = (int) $itemData['qty'];
+    //             $foc      = (int) $itemData['foc'];
+    //             $rate     = $itemData['rate'];
+    //             $amount   = $itemData['amount'];
+    //             $tax      = $itemData['tax'];
+    //             $prevBal  = $itemData['prevBalance'];
+
+    //             // ✅ Find Item by name instead of code
+    //             $item = Item::where('item_name', $itemName)->first();
+
+    //             if (!$item) {
+    //                 return redirect()->back()->with('error', "Item not found: $itemName");
+    //             }
+
+    //             // ✅ Get latest purchase record
+    //             $purchaseRecord = PurchaseRecord::where('item_id', $item->id)
+    //                 ->latest()
+    //                 ->first();
+
+    //             $batch_code = $purchaseRecord->batch_code ?? null;
+    //             $expiry = $purchaseRecord->expiry ?? null;
+
+    //             // ✅ Check stock by name
+    //             $stock = Stock::where('item', $itemName)->first();
+    //             if (!$stock || $stock->in_stock < $qty) {
+    //                 return redirect()->back()->with('error', "Insufficient stock for item: $itemName");
+    //             }
+
+    //             // ✅ Save sale report (no more item_code)
+    //             $sale = SaleReport::create([
+    //                 'user_id'    => $userId,
+    //                 'invoice_number' => $invoiceNumber,
+    //                 'item_name'  => $itemName,
+    //                 'sale_qty'   => $qty,
+    //                 'foc'        => $foc,
+    //                 'sale_rate'  => $rate,
+    //                 'amount'     => $amount,
+    //                 'tax'        => $tax,
+    //                 'sub_total'  => $amount + $tax,
+    //                 'batch_code' => $batch_code,
+    //                 'expiry'     => $expiry,
+    //                 'pack_size'  => null,
+    //             ]);
+
+    //             // ✅ Update stock
+    //             $stock->in_stock -= $qty;
+    //             $stock->foc += $foc;
+    //             $stock->save();
+
+    //             $saleItems[] = $sale;
+    //             $totalTax += $tax;
+    //             $totalAmount += $amount;
+    //         }
+
+    //         // ✅ Step 6: Generate PDF
+    //         $pdf = Pdf::loadView('invoice_pdf', [
+    //             'invoice' => (object)[
+    //                 'id' => $saleItems[0]->id ?? 0,
+    //                 'user' => $customer,
+    //                 'tax' => $totalTax,
+    //                 'previous_balance' => $previousBalance,
+    //                 'created_at' => \Carbon\Carbon::parse($invoiceDate),
+    //                 'items' => collect($saleItems),
+    //             ],
+    //             'customer' => $customer,
+    //             'invoice_no' => 'INV-' . Str::padLeft($invoiceNumber, 5, '0'),
+    //             'date' => \Carbon\Carbon::parse($invoiceDate)->format('d-m-Y'),
+    //         ]);
+
+    //         $filename = $customer->name . '-' . $invoiceNumber . '.pdf';
+    //         $pdfPath = 'invoices/' . $filename;
+
+    //         Storage::makeDirectory('invoices');
+    //         $pdf->save(storage_path('app/' . $pdfPath));
+
+    //         // ✅ Update PDF path for all items
+    //         foreach ($saleItems as $sale) {
+    //             $sale->update(['pdf_path' => $pdfPath]);
+    //         }
+
+    //         return redirect()->back()->with('info', 'Invoice created and PDF generated.');
+    //     } catch (\Exception $e) {
+    //         Log::error('Invoice Error: ' . $e->getMessage());
+    //         return redirect()->back()->with('error', 'Something went wrong. Please try again.');
+    //     }
+    // }
 
     public function store_invoice(Request $request)
     {
         try {
+            // ✅ Step 1: Validate invoice date
+            $validator = Validator::make($request->all(), [
+                'invoice_date' => 'required|date',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('error', 'Please select a valid invoice date.');
+            }
+
+            // ✅ Step 2: Handle customer (existing or new)
             if ($request->filled('user_id') && $request->input('user_id') !== 'new_user') {
                 $userId = $request->input('user_id');
                 $customer = User::find($userId);
             } else {
-                // Runtime user creation
-                $validator = Validator::make($request->all(), [
-                    'name'    => 'required|string|max:255',
-                    'contact' => 'nullable|string|max:20',
-                    'email'   => 'nullable|email|unique:users,email',
+                // ... (your same customer creation logic here)
+            }
+
+            $invoiceDate = $request->input('invoice_date', now()->format('Y-m-d'));
+
+            // ✅ Step 3: Check if this is EDIT or CREATE
+            $invoiceNumber = null;
+            $saleItems = [];
+            $totalTax = 0;
+            $totalAmount = 0;
+            $previousBalance = $request->input('previous_balance', 0);
+
+            if ($request->has('invoice_number')) {
+                // -------------------- EDIT CASE --------------------
+                $invoiceNumber = $request->input('invoice_number');
+
+                // fetch old sales of this invoice
+                $oldSales = SaleReport::where('invoice_number', $invoiceNumber)->get();
+
+                foreach ($oldSales as $oldSale) {
+                    // restore stock before deleting
+                    $stock = Stock::where('item', $oldSale->item_name)->first();
+                    if ($stock) {
+                        $stock->in_stock += $oldSale->sale_qty;
+                        $stock->foc -= $oldSale->foc;
+                        $stock->save();
+                    }
+                    $oldSale->delete();
+                }
+            } else {
+                // -------------------- CREATE CASE --------------------
+                $maxInvoiceNumber = SaleReport::whereNotNull('invoice_number')
+                    ->max('invoice_number');
+                $invoiceNumber = $maxInvoiceNumber ? $maxInvoiceNumber + 1 : 330;
+            }
+
+            // ✅ Step 4: Loop through items (same logic for create/edit)
+            foreach ($request->items as $rawItem) {
+                $itemData = json_decode($rawItem, true);
+                if (!$itemData) continue;
+
+                $itemName = $itemData['itemName'];
+                $qty      = (int) $itemData['qty'];
+                $foc      = (int) $itemData['foc'];
+                $rate     = $itemData['rate'];
+                $amount   = $itemData['amount'];
+                $tax      = $itemData['tax'];
+                $prevBal  = $itemData['prevBalance'];
+
+                $item = Item::where('item_name', $itemName)->first();
+                if (!$item) {
+                    return redirect()->back()->with('error', "Item not found: $itemName");
+                }
+
+                $purchaseRecord = PurchaseRecord::where('item_id', $item->id)->latest()->first();
+                $batch_code = $purchaseRecord->batch_code ?? null;
+                $expiry = $purchaseRecord->expiry ?? null;
+
+                $stock = Stock::where('item', $itemName)->first();
+                if (!$stock || $stock->in_stock < $qty) {
+                    return redirect()->back()->with('error', "Insufficient stock for item: $itemName");
+                }
+
+                // Save new sale record
+                $sale = SaleReport::create([
+                    'user_id'    => $userId,
+                    'invoice_number' => $invoiceNumber,
+                    'item_name'  => $itemName,
+                    'sale_qty'   => $qty,
+                    'foc'        => $foc,
+                    'sale_rate'  => $rate,
+                    'amount'     => $amount,
+                    'tax'        => $tax,
+                    'sub_total'  => $amount + $tax,
+                    'batch_code' => $batch_code,
+                    'expiry'     => $expiry,
+                    'pack_size'  => null,
                 ]);
-            
-                if ($validator->fails()) {
-                    return redirect()->back()
-                        ->withErrors($validator)
-                        ->withInput()
-                        ->with('error', 'Validation failed. Please check the form fields.');
-                }
 
-                $prefix = strtoupper(substr(str_replace(' ', '', $request->name), 0, 2));
-                $lastCustomer = User::where('customer_id', 'like', $prefix . '%')
-                    ->orderBy('customer_id', 'desc')
-                    ->first();
+                // Update stock
+                $stock->in_stock -= $qty;
+                $stock->foc += $foc;
+                $stock->save();
 
-                if ($lastCustomer) {
-                    $lastNumber = (int) substr($lastCustomer->customer_id, -3);
-                    $nextNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-                } else {
-                    $nextNumber = "001";
-                }
-            
-                $customer = new User();
-                $customer->name       = $request->name;
-                $customer->username   = strtolower(str_replace(' ', '.', $request->name)) . rand(100,999);
-                $customer->email      = $request->email;
-                $customer->customer_id   = $prefix . $nextNumber;
-                $customer->contact    = $request->contact;
-                $customer->ntn_strn   = $request->ntn_strn;
-                $customer->license_no = $request->license_no;
-                $customer->address    = $request->address;
-                $customer->usertype   = 'customer';
-                $customer->password   = Hash::make(Str::random(8)); // auto password
-                $customer->save();
-            
-                $userId = $customer->id;
-            }
-            
-
-            $itemCode = $request->input('new_item_code') ?? $request->input('item_code');
-            $itemName = $request->input('new_item_name') ?? $request->input('item_name');
-
-            // Fallback from dropdown
-            if (!$itemCode || !$itemName) {
-                $selectedText = $request->input('itemInput');  
-                if ($selectedText && strpos($selectedText, '-') !== false) {
-                    [$itemCode, $itemName] = array_map('trim', explode('-', $selectedText, 2));
-                }
+                $saleItems[] = $sale;
+                $totalTax += $tax;
+                $totalAmount += $amount;
             }
 
-            $qty = (int) $request->input('qty');
-            $foc = (int) $request->input('foc', 0);
-            $rate = $request->input('rate');
-            $amount = $request->input('amount');
-
-            // Check stock
-            $stock = Stock::where('item_code', $itemCode)->first();
-
-            if (!$stock) {
-                return redirect()->back()->with('error', "Stock not found for item code: $itemCode");
-            }
-
-            if ($stock->in_stock <= 0 || $stock->in_stock < $qty) {
-                return redirect()->back()->with('error', 'Stock is insufficient or already empty.');
-            }
-
-            // Save sale report
-            $sale = SaleReport::create([
-                'user_id' => $userId,
-                'item_code' => $itemCode,
-                'item_name' => $itemName,
-                'sale_qty' => $qty,
-                'foc' => $foc,
-                'sale_rate' => $rate,
-                'amount' => $amount,
-                'pack_size' => null,
-            ]);
-
-            // Update stock
-            $stock->in_stock -= $qty;
-            $stock->foc += $foc;
-            $stock->save();
-
-            // Get customer info
-            $customer = $userId ? User::find($userId) : null;
-
-            // Get all sale items for this invoice (optional: filter by date/time if needed)
-            $saleItems = SaleReport::where('user_id', $userId)->whereDate('created_at', $sale->created_at->toDateString())->get();
-
-            // Generate PDF
+            // ✅ Step 5: Generate PDF
             $pdf = Pdf::loadView('invoice_pdf', [
                 'invoice' => (object)[
-                    'id' => $sale->id,
+                    'id' => $saleItems[0]->id ?? 0,
                     'user' => $customer,
-                    'created_at' => $sale->created_at,
-                    'items' => $saleItems,
+                    'tax' => $totalTax,
+                    'previous_balance' => $previousBalance,
+                    'created_at' => \Carbon\Carbon::parse($invoiceDate),
+                    'items' => collect($saleItems),
                 ],
                 'customer' => $customer,
-                'invoice_no' => 'INV-' . Str::padLeft($sale->id, 5, '0'),
-                'date' => now()->format('d-m-Y'),
+                'invoice_no' => 'INV-' . Str::padLeft($invoiceNumber, 5, '0'),
+                'date' => \Carbon\Carbon::parse($invoiceDate)->format('d-m-Y'),
             ]);
 
-            // Save PDF
-            $filename = 'invoice_' . $sale->id . '.pdf';
+            $filename = $customer->name . '-' . $invoiceNumber . '.pdf';
             $pdfPath = 'invoices/' . $filename;
 
             Storage::makeDirectory('invoices');
             $pdf->save(storage_path('app/' . $pdfPath));
 
-            // Save PDF path to all related sale reports for this user on that day
-            SaleReport::where('user_id', $userId)
-                ->whereDate('created_at', $sale->created_at->toDateString())
-                ->update(['pdf_path' => $pdfPath]);
+            foreach ($saleItems as $sale) {
+                $sale->update(['pdf_path' => $pdfPath]);
+            }
 
-            return redirect()->back()->with('info', 'Invoice created and PDF generated.');
+            return redirect()->back()->with('info', $request->has('invoice_number')
+                ? 'Invoice updated successfully.'
+                : 'Invoice created and PDF generated.');
         } catch (\Exception $e) {
             Log::error('Invoice Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
+
 
     public function items()
     {
@@ -487,14 +722,12 @@ class UserController extends Controller
     // ✅ Validate input
     $validated = $request->validate([
         'item_name' => 'required|string|max:255',
-        'item_code' => 'required|string|max:50|unique:items,item_code',
         'status'    => 'required|in:active,inactive',
     ]);
 
     try {
         $item = new Item();
         $item->item_name = $validated['item_name'];
-        $item->item_code = $validated['item_code'];
         $item->status    = $validated['status'];
         $item->save();
 

@@ -50,7 +50,6 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Item Code</th>
                                         <th>Item Name</th>
                                         <th>Status</th>
                                         <th>Created At</th>
@@ -60,7 +59,6 @@
                                     @foreach($items as $index => $item)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $item->item_code }}</td>
                                         <td>{{ $item->item_name }}</td>
                                         <td>
                                             <span class="badge badge-{{ $item->status == 'active' ? 'success' : 'danger' }}">
@@ -90,9 +88,7 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
-                        <label>Item Code</label>
-                        <input type="text" name="item_code" class="form-control" required>
-
+                       
                         <label>Item Name</label>
                         <input type="text" name="item_name" class="form-control" required>
 

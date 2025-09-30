@@ -14,8 +14,6 @@ return new class extends Migration {
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-
-            $table->string('item_code');  // Item Code
             $table->string('item');  // Item Name
             $table->float('purchase_qty');  // Purchase Quantity
             $table->float('sale_qty')->default(0);  // Sale Quantity

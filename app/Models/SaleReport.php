@@ -11,13 +11,18 @@ class SaleReport extends Model
 
     protected $fillable = [
         'user_id',
-        'item_code',
+        'employee_id',
+        'invoice_number',
         'item_name',
         'pack_size',
         'sale_qty',
         'foc',
         'sale_rate',
         'amount',
+        'tax',
+        'sub_total',
+        'batch_code',
+        'expiry',
         'pdf_path', 
     ];
 
