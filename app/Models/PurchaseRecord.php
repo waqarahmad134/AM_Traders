@@ -8,6 +8,7 @@ class PurchaseRecord extends Model
 {
     protected $fillable = [
         'item_id',
+        'supplier_id',
         'pack_qty',
         'purchase_rate',
         'purchase_qty',
@@ -15,12 +16,16 @@ class PurchaseRecord extends Model
         'remarks',
         'batch_code',
         'expiry',
-        'created_at', // ✅ allow overriding
-
+        'created_at',
     ];
 
     public function item()
     {
         return $this->belongsTo(Item::class, 'item_id');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(User::class, 'supplier_id');
     }
 }

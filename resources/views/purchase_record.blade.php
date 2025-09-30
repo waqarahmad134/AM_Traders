@@ -44,7 +44,6 @@
                             @endif  
                         </div>
                     </div>
-
                     <div class="body">
                         <div class="table-responsive">
                             <table id="example1" class="table table-bordered table-hover js-basic-example dataTable table-custom">
@@ -58,6 +57,7 @@
                                         <th>Sale Rate</th>
                                         <th>Batch Code</th>
                                         <th>Expiry</th>
+                                        <th>Supplier</th>
                                         <th>Remarks</th>
                                         <th>Date</th>
                                         <th>Action</th>
@@ -74,6 +74,7 @@
                                         <td>{{ $record->sale_rate }}</td>
                                         <td>{{ $record->batch_code }}</td>
                                         <td>{{ $record->expiry }}</td>
+                                        <td>{{ $record->supplier->name ?? "NONE" }}</td>
                                         <td>{{ $record->remarks }}</td>
                                         <td>{{ $record->created_at->format('Y-m-d H:i') }}</td>
                                         <td>
@@ -131,6 +132,15 @@
 
                         <label>Expiry</label>
                         <input type="date" name="expiry" class="form-control">
+                        
+                        <label>Select Supplier</label>
+                        <select name="supplier_id" class="form-control">
+                            <option value="" selected disabled>-- Select Supplier --</option>
+                            @foreach($suppliers as $supplier)
+                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                            @endforeach
+                        </select>
+
 
                         <label>Remarks</label>
                         <textarea name="remarks" class="form-control" rows="2"></textarea>

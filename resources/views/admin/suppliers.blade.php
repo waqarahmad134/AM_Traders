@@ -125,7 +125,7 @@
                     <div class="row">
                         <div class="col-md-6 col-lg-6">
                             <label>Email</label>
-                            <input name="email" type="email" class="form-control" autocomplete="off" placeholder="Enter Email Address Here" required>
+                            <input name="email" type="email" class="form-control" autocomplete="off" placeholder="Enter Email Address Here" >
                         </div>
                         <div class="col-md-6 col-lg-6">
                             <label>Phone</label>
@@ -135,9 +135,14 @@
                         </div>
                     </div>
                     <div class="row">
+                    <div class="col-md-6">
+                            <label>Address</label>
+                            <input name="address" type="text" class="form-control" 
+                                   placeholder="Enter Address">
+                        </div>
                         <div class="col-md-6 col-lg-6">
                             <label for="passInput">Password</label>
-                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" required autocomplete="off">
+                            <input name="password" type="password" id="passInput" class="form-control" placeholder="Enter Password Here" autocomplete="off">
                             <input type="checkbox" id="showPass">&nbsp; Show Password
                         </div>
                     </div>
