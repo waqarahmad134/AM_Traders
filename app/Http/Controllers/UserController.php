@@ -394,7 +394,8 @@ class UserController extends Controller
         $users = User::where('userType', '!=', 'admin')->get();
         $stocks = Stock::all();
         $saleReports = SaleReport::orderBy('created_at', 'desc')->get();
-        return view('create_invoice', compact('items', 'users', 'stocks', 'saleReports'));
+        $purchaseRecord = PurchaseRecord::orderBy('created_at', 'desc')->get();
+        return view('create_invoice', compact('items', 'users', 'stocks', 'saleReports' , 'purchaseRecord'));
     }
 
 
@@ -569,6 +570,7 @@ class UserController extends Controller
 
     public function store_invoice(Request $request)
     {
+        return $request->all();
         try {
             // ✅ Step 1: Validate invoice date
             $validator = Validator::make($request->all(), [
@@ -599,7 +601,7 @@ class UserController extends Controller
             $totalAmount = 0;
             $previousBalance = $request->input('previous_balance', 0);
 
-            if ($request->has('invoice_number')) {
+            if ($request->filled('invoice_number')) {
                 // -------------------- EDIT CASE --------------------
                 $invoiceNumber = $request->input('invoice_number');
 
@@ -622,10 +624,31 @@ class UserController extends Controller
                     ->max('invoice_number');
                 $invoiceNumber = $maxInvoiceNumber ? $maxInvoiceNumber + 1 : 330;
             }
-
-            // ✅ Step 4: Loop through items (same logic for create/edit)
+            
             foreach ($request->items as $rawItem) {
-                $itemData = json_decode($rawItem, true);
+                // If it's JSON string → decode
+                if (is_string($rawItem)) {
+                    $decoded = json_decode($rawItem, true);
+            
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $itemData = $decoded;
+                    } else {
+                        \Log::error("Invalid JSON item: " . $rawItem);
+                        continue; // skip broken row
+                    }
+                }
+                // If it's already an array
+                elseif (is_array($rawItem)) {
+                    $itemData = $rawItem;
+                }
+                // Unknown type → skip
+                else {
+                    continue;
+                }
+            
+                // ✅ now you can safely use $itemData['item_name'], etc.
+                // Example:
+                \Log::info("Processing item:", $itemData);
                 if (!$itemData) continue;
 
                 $itemName = $itemData['itemName'];
@@ -653,6 +676,7 @@ class UserController extends Controller
                 // Save new sale record
                 $sale = SaleReport::create([
                     'user_id'    => $userId,
+                    'employee_id'    => $request->employee_id,
                     'invoice_number' => $invoiceNumber,
                     'item_name'  => $itemName,
                     'sale_qty'   => $qty,

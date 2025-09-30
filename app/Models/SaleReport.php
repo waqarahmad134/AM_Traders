@@ -31,4 +31,8 @@ class SaleReport extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function employee()
+    {
+        return $this->belongsTo(User::class, 'employee_id');
+    }
 }

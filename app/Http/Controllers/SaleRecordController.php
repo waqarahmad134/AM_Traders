@@ -3,17 +3,49 @@
 namespace App\Http\Controllers;
 
 use App\Models\SaleReport;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SaleRecordController extends Controller
 {
-    public function index()
-    {
-        $saleReports = SaleReport::with('user')->latest()->get();
-        // dd($saleReports);
-        return view('sale_record', compact('saleReports'));
+    // public function index(Request $request)
+    // {
+    //     $query = SaleReport::with('user')->latest();
+
+    //     if ($request->filled('start_date') && $request->filled('end_date')) {
+    //         $query->whereBetween('created_at', [
+    //             $request->start_date . " 00:00:00",
+    //             $request->end_date . " 23:59:59"
+    //         ]);
+    //     }
+
+    //     $saleReports = $query->get();
+
+    //     return view('sale_record', compact('saleReports'));
+    // }
+
+    public function index(Request $request)
+{
+    $query = SaleReport::with('user');
+
+    // Date filter
+    if ($request->filled('start_date') && $request->filled('end_date')) {
+        $query->whereBetween('created_at', [
+            $request->start_date . " 00:00:00",
+            $request->end_date . " 23:59:59"
+        ]);
     }
+
+    if ($request->filled('employee_id')) {
+        $query->where('employee_id', $request->employee_id);
+    }
+    $saleReports = $query->latest()->get();
+    $employees = User::where('usertype', 'employee')->get();
+    return view('sale_record', compact('saleReports', 'employees'));
+}
+
 
     public function store(Request $request)
     {
@@ -48,4 +80,7 @@ class SaleRecordController extends Controller
 
         return redirect()->route('sale_reports.index')->with('success', 'Sale record deleted successfully.');
     }
+
+
+
 }

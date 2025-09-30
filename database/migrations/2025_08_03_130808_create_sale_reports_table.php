@@ -12,7 +12,7 @@ class CreateSaleReportsTable extends Migration
             $table->id();
             $table->integer('invoice_number')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->unsignedBigInteger('employee_id')->nullable();   // Employee reference
+            $table->unsignedBigInteger('employee_id')->nullable();   
             $table->string('item_name');
             $table->string('pack_size')->nullable();
             $table->integer('sale_qty');
