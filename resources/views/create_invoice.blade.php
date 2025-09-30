@@ -99,34 +99,28 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="form-group">
-                                <!-- <label>Search Item <p style="display:none;" id="inStocks">Total Items In Stock : </p></label>
-                                <label> <p style="display:none;" id="batch_code"></p></label>
-                                <label> <p style="display:none;" id="expiry"></p></label>
-                                <label> <p style="display:none;" id="purchase_rate"></p></label> -->
-                                <div class="mb-3">
-    <label>Item Details:</label>
-    <table class="table table-sm table-bordered">
-        <thead class="thead-light">
-            <tr>
-                <th>In Stock</th>
-                <th>Batch Code</th>
-                <th>Expiry</th>
-                <th>Purchase Rate</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td id="inStocks">0</td>
-                <td id="batch_code">-</td>
-                <td id="expiry">-</td>
-                <td id="purchase_rate">0</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
+                                <div class="mb-3 stcoks_table">
+                                    <label>Item Details:</label>
+                                    <table class="table table-sm table-bordered">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>In Stock</th>
+                                                <th>Batch Code</th>
+                                                <th>Expiry</th>
+                                                <th>Purchase Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td id="inStocks">0</td>
+                                                <td id="batch_code">-</td>
+                                                <td id="expiry">-</td>
+                                                <td id="purchase_rate">0</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <input list="itemsList" id="itemInput" class="form-control mr-2" placeholder="Search by item name">
                                 </div>
@@ -230,7 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedOption) {
             const itemName = selectedOption.getAttribute('data-name');
             const itemID = selectedOption.getAttribute('data-id');
-            const selectedPurchaseItem = purchaseRecord?.find(data => data.item_id == itemID);
+            const selectedPurchaseItem = purchaseRecord?.filter(data => data.item_id == itemID);
+            const selectedStocks = stocks?.filter(stock => stock.item === itemName);
             const selectedItem = stocks?.find(stock => stock.item === itemName);
 
             if (!selectedItem) {
@@ -238,18 +233,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            
+            const mergedData = selectedStocks
+                .filter(stockItem => stockItem.in_stock > 0)
+                .map(stockItem => {
+                    // Find the matching purchase record using batch_code (and item_id for safety)
+                    const matchingPurchase = selectedPurchaseItem.find(purchase =>
+                        purchase.item_id == stockItem.item_id && 
+                        purchase.batch_code === stockItem.batch_code
+                    );
+
+                    return {
+                        in_stock: stockItem.in_stock,
+                        batch_code: stockItem.batch_code,
+                        expiry: stockItem.expiry,
+                        // Get purchase_rate from the matching record
+                        purchase_rate: matchingPurchase ? matchingPurchase.purchase_rate : 'N/A',
+                    };
+                });
+
+            // 2. Select the tbody element
+            const itemDetailsTableBody = document.querySelector('.stcoks_table tbody');
+
+            // Clear existing content (the static row)
+            itemDetailsTableBody.innerHTML = '';
+
+            // 3. Map the merged data to create HTML table rows and insert
+            if (mergedData.length > 0) {
+                const tableRowsHtml = mergedData.map(item => `
+                    <tr>
+                        <td>${item.in_stock}</td>
+                        <td>${item.batch_code}</td>
+                        <td>${item.expiry}</td>
+                        <td>${item.purchase_rate}</td>
+                    </tr>
+                `).join('');
+
+                itemDetailsTableBody.innerHTML = tableRowsHtml;
+            } else {
+                // Show a message if no stock is available
+                itemDetailsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center">No current stock available for this item.</td>
+                    </tr>
+                `;
+            }
+
             document.getElementById('selectedItemName').textContent = selectedItem.item;
             document.getElementById('hiddenItemName').value = selectedItem.item;
 
-            const inStocksCell = document.getElementById('inStocks');
-            const batchCodeCell = document.getElementById('batch_code');
-            const expiryCell = document.getElementById('expiry');
-            const purchaseRateCell = document.getElementById('purchase_rate');
+            // const inStocksCell = document.getElementById('inStocks');
+            // const batchCodeCell = document.getElementById('batch_code');
+            // const expiryCell = document.getElementById('expiry');
+            // const purchaseRateCell = document.getElementById('purchase_rate');
 
-            inStocksCell.textContent = selectedItem.in_stock ?? 0;
-            batchCodeCell.textContent = selectedPurchaseItem?.batch_code ?? '-';
-            expiryCell.textContent = selectedPurchaseItem?.expiry ?? '-';
-            purchaseRateCell.textContent = selectedPurchaseItem?.purchase_rate ?? 0;
+            // inStocksCell.textContent = selectedItem.in_stock ?? 0;
+            // batchCodeCell.textContent = selectedPurchaseItem?.batch_code ?? '-';
+            // expiryCell.textContent = selectedPurchaseItem?.expiry ?? '-';
+            // purchaseRateCell.textContent = selectedPurchaseItem?.purchase_rate ?? 0;
             document.getElementById('itemDetails').style.display = 'block';
             calculateAndValidate();
         } else {
