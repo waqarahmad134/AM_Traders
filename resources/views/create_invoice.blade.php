@@ -272,12 +272,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('amount').value = subtotal.toFixed(0);
 
         const itemName = document.getElementById('selectedItemName').textContent;
-        const selectedItem = stocks.find(stock => stock.item === itemName);
+        // const selectedItem = stocks.find(stock => stock.item === itemName);
+        const relevantStocks = stocks.filter(stock => stock.item === itemName);
+        const totalInStock = relevantStocks.reduce((sum, stock) => sum + stock.in_stock, 0);
+        console.log("🚀 ~ calculateAndValidate ~ totalInStock:", totalInStock)
+
         const qtyError = document.getElementById('qtyError');
         const createInvoiceBtn = document.getElementById('createInvoiceBtn');
 
-        if (selectedItem && qty > selectedItem.in_stock) {
-            qtyError.textContent = `Only ${selectedItem.in_stock} items in stock.`;
+        // if (selectedItem && qty > selectedItem.in_stock) {
+        if (qty > totalInStock) {
+            qtyError.textContent = `Only ${totalInStock} items in stock.`;
             createInvoiceBtn.disabled = true;
         } else {
             qtyError.textContent = '';

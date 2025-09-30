@@ -14,16 +14,19 @@ return new class extends Migration {
     {
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('item');  // Item Name
-            $table->float('purchase_qty');  // Purchase Quantity
-            $table->float('sale_qty')->default(0);  // Sale Quantity
-            $table->float('foc')->default(0);  // Free of Cost Quantity
-            $table->float('in_stock')->default(0);  // Calculated current stock
-
-            $table->unsignedBigInteger('supplier_id')->nullable();  // Nullable Supplier
+            $table->string('item'); 
+            $table->unsignedBigInteger('item_id');     // FK to items
+            $table->string('batch_code')->nullable();  // Nullable batch code
+            $table->date('expiry')->nullable();        // Nullable expiry
+            $table->float('purchase_qty');             // Purchased quantity
+            $table->float('sale_qty')->default(0);     // Sold quantity
+            $table->float('foc')->default(0);          // Free of cost quantity
+            $table->float('in_stock')->default(0);     // Calculated stock
+            $table->unsignedBigInteger('supplier_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
+            $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('supplier_id')->references('id')->on('users')->onDelete('set null');
         });
     }

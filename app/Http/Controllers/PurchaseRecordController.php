@@ -35,6 +35,8 @@ class PurchaseRecordController extends Controller
         ]);
 
         $item = Item::findOrFail($request->item_id);
+
+        // Create purchase record
         PurchaseRecord::create([
             'item_id' => $request->item_id,
             'pack_qty' => $request->pack_qty,
@@ -46,8 +48,10 @@ class PurchaseRecordController extends Controller
             'expiry' => $request->expiry,
         ]);
 
-        $stock = Stock::where('item', $item->item_name)
-            ->where('item', $item->item_name)
+        // Update or create stock for this item + batch + expiry
+        $stock = Stock::where('item_id', $item->id)
+            ->where('batch_code', $request->batch_code)
+            ->where('expiry', $request->expiry)
             ->first();
 
         if ($stock) {
@@ -57,6 +61,9 @@ class PurchaseRecordController extends Controller
         } else {
             Stock::create([
                 'item' => $item->item_name,
+                'item_id' => $item->id,
+                'batch_code' => $request->batch_code,
+                'expiry' => $request->expiry,
                 'purchase_qty' => $request->purchase_qty,
                 'sale_qty' => 0,
                 'foc' => 0,
@@ -67,6 +74,7 @@ class PurchaseRecordController extends Controller
 
         return redirect()->route('purchase_record.index')->with('success', 'Purchase record added successfully.');
     }
+
 
     public function edit($id)
     {

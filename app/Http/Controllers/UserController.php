@@ -407,10 +407,25 @@ class UserController extends Controller
     }
 
 
+    public function role_store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:roles,name',
+        ]);
+
+        Role::create([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->back()->with('success', 'Role added successfully!');
+    }
+
+
     // public function store_invoice(Request $request)
     // {
     //     try {
-    //         // ✅ Step 1: Validate invoice date
+    //         // ---------------- Step 1: Validate invoice date ----------------
     //         $validator = Validator::make($request->all(), [
     //             'invoice_date' => 'required|date',
     //         ]);
@@ -422,128 +437,110 @@ class UserController extends Controller
     //                 ->with('error', 'Please select a valid invoice date.');
     //         }
 
-    //         // ✅ Step 2: Handle customer (existing or new)
+    //         // ---------------- Step 2: Handle customer ----------------
     //         if ($request->filled('user_id') && $request->input('user_id') !== 'new_user') {
     //             $userId = $request->input('user_id');
     //             $customer = User::find($userId);
     //         } else {
-    //             $validator = Validator::make($request->all(), [
-    //                 'name'    => 'required|string|max:255',
-    //                 'contact' => 'nullable|string|max:20',
-    //                 'email'   => 'nullable|email|unique:users,email',
-    //             ]);
-
-    //             if ($validator->fails()) {
-    //                 return redirect()->back()
-    //                     ->withErrors($validator)
-    //                     ->withInput()
-    //                     ->with('error', 'Validation failed. Please check the form fields.');
-    //             }
-
-    //             $prefix = strtoupper(substr(str_replace(' ', '', $request->name), 0, 2));
-    //             $lastCustomer = User::where('customer_id', 'like', $prefix . '%')
-    //                 ->orderBy('customer_id', 'desc')
-    //                 ->first();
-
-    //             $nextNumber = $lastCustomer
-    //                 ? str_pad(((int) substr($lastCustomer->customer_id, -3)) + 1, 3, '0', STR_PAD_LEFT)
-    //                 : "001";
-
-    //             $customer = new User();
-    //             $customer->name       = $request->name;
-    //             $customer->email      = $request->email;
-    //             $customer->customer_id   = $prefix . $nextNumber;
-    //             $customer->contact    = $request->contact;
-    //             $customer->ntn_strn   = $request->ntn_strn;
-    //             $customer->license_no = $request->license_no;
-    //             $customer->address    = $request->address;
-    //             $customer->usertype   = 'customer';
-    //             $customer->password   = Hash::make(Str::random(8));
-    //             $customer->save();
-
-    //             $userId = $customer->id;
+    //             // Handle new customer creation if needed
     //         }
 
-    //         // ✅ Step 3: Get invoice date
     //         $invoiceDate = $request->input('invoice_date', now()->format('Y-m-d'));
-            
-    //         // ✅ Step 4: Generate permanent invoice number starting from 330
-    //         // Get the highest invoice number from all sale reports
-    //         $maxInvoiceNumber = SaleReport::whereNotNull('invoice_number')
-    //             ->max('invoice_number');
-            
-    //         // Start from 330 if no invoices exist, otherwise increment from highest
-    //         $invoiceNumber = $maxInvoiceNumber ? $maxInvoiceNumber + 1 : 330;
 
-    //         // ✅ Step 5: Loop through items
+    //         // ---------------- Step 3: Determine invoice number ----------------
+    //         $invoiceNumber = $request->filled('invoice_number')
+    //             ? $request->input('invoice_number')
+    //             : (SaleReport::whereNotNull('invoice_number')->max('invoice_number') + 1 ?? 330);
+
     //         $saleItems = [];
     //         $totalTax = 0;
     //         $totalAmount = 0;
     //         $previousBalance = $request->input('previous_balance', 0);
 
-    //         foreach ($request->items as $rawItem) {
-    //             $itemData = json_decode($rawItem, true);
-
-    //             if (!$itemData) {
-    //                 continue;
+    //         // ---------------- Step 4: Handle EDIT invoice ----------------
+    //         if ($request->filled('invoice_number')) {
+    //             $oldSales = SaleReport::where('invoice_number', $invoiceNumber)->get();
+    //             foreach ($oldSales as $oldSale) {
+    //                 // Restore stock for the exact batch used
+    //                 $stock = Stock::where('item', $oldSale->item_name)
+    //                     ->where('batch_code', $oldSale->batch_code)
+    //                     ->where('expiry', $oldSale->expiry)
+    //                     ->first();
+    //                 if ($stock) {
+    //                     $stock->in_stock += $oldSale->sale_qty;
+    //                     $stock->foc -= $oldSale->foc;
+    //                     $stock->save();
+    //                 }
+    //                 $oldSale->delete();
     //             }
+    //         }
+
+    //         // ---------------- Step 5: Process items ----------------
+    //         foreach ($request->items as $rawItem) {
+    //             $itemData = is_string($rawItem) ? json_decode($rawItem, true) : $rawItem;
+    //             if (!$itemData) continue;
 
     //             $itemName = $itemData['itemName'];
     //             $qty      = (int) $itemData['qty'];
     //             $foc      = (int) $itemData['foc'];
     //             $rate     = $itemData['rate'];
-    //             $amount   = $itemData['amount'];
     //             $tax      = $itemData['tax'];
-    //             $prevBal  = $itemData['prevBalance'];
 
-    //             // ✅ Find Item by name instead of code
     //             $item = Item::where('item_name', $itemName)->first();
-
     //             if (!$item) {
     //                 return redirect()->back()->with('error', "Item not found: $itemName");
     //             }
 
-    //             // ✅ Get latest purchase record
-    //             $purchaseRecord = PurchaseRecord::where('item_id', $item->id)
-    //                 ->latest()
-    //                 ->first();
+    //             // Get available stocks for this item in FIFO order (oldest first)
+    //             $stocks = Stock::where('item', $itemName)
+    //                 ->where('in_stock', '>', 0)
+    //                 ->orderBy('created_at', 'asc')
+    //                 ->get();
 
-    //             $batch_code = $purchaseRecord->batch_code ?? null;
-    //             $expiry = $purchaseRecord->expiry ?? null;
-
-    //             // ✅ Check stock by name
-    //             $stock = Stock::where('item', $itemName)->first();
-    //             if (!$stock || $stock->in_stock < $qty) {
-    //                 return redirect()->back()->with('error', "Insufficient stock for item: $itemName");
+    //             $totalInStock = $stocks->sum('in_stock');
+    //             if ($totalInStock < $qty) {
+    //                 return redirect()->back()->with('error', "Insufficient stock for item: $itemName. Available: $totalInStock");
     //             }
 
-    //             // ✅ Save sale report (no more item_code)
-    //             $sale = SaleReport::create([
-    //                 'user_id'    => $userId,
-    //                 'invoice_number' => $invoiceNumber,
-    //                 'item_name'  => $itemName,
-    //                 'sale_qty'   => $qty,
-    //                 'foc'        => $foc,
-    //                 'sale_rate'  => $rate,
-    //                 'amount'     => $amount,
-    //                 'tax'        => $tax,
-    //                 'sub_total'  => $amount + $tax,
-    //                 'batch_code' => $batch_code,
-    //                 'expiry'     => $expiry,
-    //                 'pack_size'  => null,
-    //             ]);
+    //             $remainingQty = $qty;
 
-    //             // ✅ Update stock
-    //             $stock->in_stock -= $qty;
-    //             $stock->foc += $foc;
-    //             $stock->save();
+    //             // Consume stocks batch by batch
+    //             foreach ($stocks as $stock) {
+    //                 if ($remainingQty <= 0) break;
 
-    //             $saleItems[] = $sale;
-    //             $totalTax += $tax;
-    //             $totalAmount += $amount;
+    //                 $deductQty = min($stock->in_stock, $remainingQty);
+
+    //                 // Create sale report for this batch
+    //                 $sale = SaleReport::create([
+    //                     'user_id'        => $userId,
+    //                     'employee_id'    => $request->employee_id,
+    //                     'invoice_number' => $invoiceNumber,
+    //                     'item_name'      => $itemName,
+    //                     'sale_qty'       => $deductQty,
+    //                     'foc'            => $foc, // optional: adjust per batch if needed
+    //                     'sale_rate'      => $rate,
+    //                     'amount'         => $deductQty * $rate,
+    //                     'tax'            => $deductQty * $tax,
+    //                     'sub_total'      => ($deductQty * $rate) + ($deductQty * $tax),
+    //                     'batch_code'     => $stock->batch_code,
+    //                     'expiry'         => $stock->expiry,
+    //                     'pack_size'      => null,
+    //                 ]);
+
+    //                 // Deduct from stock
+    //                 $stock->in_stock -= $deductQty;
+    //                 $stock->foc += $foc; // optional
+    //                 $stock->save();
+
+    //                 $saleItems[] = $sale;
+    //                 $totalTax += $deductQty * $tax;
+    //                 $totalAmount += $deductQty * $rate;
+
+    //                 $remainingQty -= $deductQty;
+    //             }
     //         }
 
-    //         // ✅ Step 6: Generate PDF
+    //         // ---------------- Step 6: Generate PDF ----------------
     //         $pdf = Pdf::loadView('invoice_pdf', [
     //             'invoice' => (object)[
     //                 'id' => $saleItems[0]->id ?? 0,
@@ -560,41 +557,27 @@ class UserController extends Controller
 
     //         $filename = $customer->name . '-' . $invoiceNumber . '.pdf';
     //         $pdfPath = 'invoices/' . $filename;
-
     //         Storage::makeDirectory('invoices');
     //         $pdf->save(storage_path('app/' . $pdfPath));
 
-    //         // ✅ Update PDF path for all items
     //         foreach ($saleItems as $sale) {
     //             $sale->update(['pdf_path' => $pdfPath]);
     //         }
 
-    //         return redirect()->back()->with('info', 'Invoice created and PDF generated.');
+    //         return redirect()->back()->with('info', $request->has('invoice_number')
+    //             ? 'Invoice updated successfully.'
+    //             : 'Invoice created and PDF generated.');
+
     //     } catch (\Exception $e) {
     //         Log::error('Invoice Error: ' . $e->getMessage());
     //         return redirect()->back()->with('error', 'Something went wrong. Please try again.');
     //     }
     // }
 
-    public function role_store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|unique:roles,name',
-        ]);
-
-        Role::create([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
-
-        return redirect()->back()->with('success', 'Role added successfully!');
-    }
-
     public function store_invoice(Request $request)
     {
-        // return $request->all();
         try {
-            // ✅ Step 1: Validate invoice date
+            // ---------------- Step 1: Validate invoice date ----------------
             $validator = Validator::make($request->all(), [
                 'invoice_date' => 'required|date',
             ]);
@@ -606,123 +589,163 @@ class UserController extends Controller
                     ->with('error', 'Please select a valid invoice date.');
             }
 
-            // ✅ Step 2: Handle customer (existing or new)
+            // ---------------- Step 2: Handle customer ----------------
             if ($request->filled('user_id') && $request->input('user_id') !== 'new_user') {
                 $userId = $request->input('user_id');
                 $customer = User::find($userId);
             } else {
-                // ... (your same customer creation logic here)
+                // Handle new customer creation if needed
             }
 
             $invoiceDate = $request->input('invoice_date', now()->format('Y-m-d'));
 
-            // ✅ Step 3: Check if this is EDIT or CREATE
-            $invoiceNumber = null;
+            // ---------------- Step 3: Determine invoice number ----------------
+            $invoiceNumber = $request->filled('invoice_number')
+                ? $request->input('invoice_number')
+                : (SaleReport::whereNotNull('invoice_number')->max('invoice_number') + 1 ?? 330);
+
             $saleItems = [];
             $totalTax = 0;
             $totalAmount = 0;
             $previousBalance = $request->input('previous_balance', 0);
 
+            // ---------------- Step 4: Handle EDIT invoice ----------------
+            $oldSaleBatches = []; // Keep track of batch codes from old sales
             if ($request->filled('invoice_number')) {
-                // -------------------- EDIT CASE --------------------
-                $invoiceNumber = $request->input('invoice_number');
-
-                // fetch old sales of this invoice
                 $oldSales = SaleReport::where('invoice_number', $invoiceNumber)->get();
 
                 foreach ($oldSales as $oldSale) {
-                    // restore stock before deleting
-                    $stock = Stock::where('item', $oldSale->item_name)->first();
+                    // Store old batch info
+                    $oldSaleBatches[] = [
+                        'batch_code' => $oldSale->batch_code,
+                        'expiry' => $oldSale->expiry,
+                        'sale_qty' => $oldSale->sale_qty,
+                        'foc' => $oldSale->foc
+                    ];
+
+                    // Restore stock for this exact batch
+                    $stock = Stock::where('item', $oldSale->item_name)
+                        ->where('batch_code', $oldSale->batch_code)
+                        ->where('expiry', $oldSale->expiry)
+                        ->first();
                     if ($stock) {
                         $stock->in_stock += $oldSale->sale_qty;
                         $stock->foc -= $oldSale->foc;
                         $stock->save();
                     }
+
                     $oldSale->delete();
                 }
-            } else {
-                // -------------------- CREATE CASE --------------------
-                $maxInvoiceNumber = SaleReport::whereNotNull('invoice_number')
-                    ->max('invoice_number');
-                $invoiceNumber = $maxInvoiceNumber ? $maxInvoiceNumber + 1 : 330;
             }
-            
+
+            // ---------------- Step 5: Process items ----------------
             foreach ($request->items as $rawItem) {
-                // If it's JSON string → decode
-                if (is_string($rawItem)) {
-                    $decoded = json_decode($rawItem, true);
-            
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        $itemData = $decoded;
-                    } else {
-                        \Log::error("Invalid JSON item: " . $rawItem);
-                        continue; // skip broken row
-                    }
-                }
-                // If it's already an array
-                elseif (is_array($rawItem)) {
-                    $itemData = $rawItem;
-                }
-                // Unknown type → skip
-                else {
-                    continue;
-                }
-            
-                // ✅ now you can safely use $itemData['item_name'], etc.
-                // Example:
-                \Log::info("Processing item:", $itemData);
+                $itemData = is_string($rawItem) ? json_decode($rawItem, true) : $rawItem;
                 if (!$itemData) continue;
 
                 $itemName = $itemData['itemName'];
                 $qty      = (int) $itemData['qty'];
                 $foc      = (int) $itemData['foc'];
                 $rate     = $itemData['rate'];
-                $amount   = $itemData['amount'];
                 $tax      = $itemData['tax'];
-                $prevBal  = $itemData['prevBalance'];
 
                 $item = Item::where('item_name', $itemName)->first();
                 if (!$item) {
                     return redirect()->back()->with('error', "Item not found: $itemName");
                 }
 
-                $purchaseRecord = PurchaseRecord::where('item_id', $item->id)->latest()->first();
-                $batch_code = $purchaseRecord->batch_code ?? null;
-                $expiry = $purchaseRecord->expiry ?? null;
+                $remainingQty = $qty;
 
-                $stock = Stock::where('item', $itemName)->first();
-                if (!$stock || $stock->in_stock < $qty) {
-                    return redirect()->back()->with('error', "Insufficient stock for item: $itemName");
+                // ---------------- Step 5a: Use old batches first (edit case) ----------------
+                foreach ($oldSaleBatches as $index => $batch) {
+                    if ($remainingQty <= 0) break;
+                    if ($batch['batch_code'] && $batch['sale_qty'] > 0) {
+                        $deductQty = min($remainingQty, $batch['sale_qty']);
+
+                        $stock = Stock::where('item', $itemName)
+                            ->where('batch_code', $batch['batch_code'])
+                            ->where('expiry', $batch['expiry'])
+                            ->first();
+
+                        if ($stock) {
+                            $sale = SaleReport::create([
+                                'user_id'        => $userId,
+                                'employee_id'    => $request->employee_id,
+                                'invoice_number' => $invoiceNumber,
+                                'item_name'      => $itemName,
+                                'sale_qty'       => $deductQty,
+                                'foc'            => $foc,
+                                'sale_rate'      => $rate,
+                                'amount'         => $deductQty * $rate,
+                                'tax'            => $deductQty * $tax,
+                                'sub_total'      => ($deductQty * $rate) + ($deductQty * $tax),
+                                'batch_code'     => $stock->batch_code,
+                                'expiry'         => $stock->expiry,
+                                'pack_size'      => null,
+                            ]);
+
+                            $stock->in_stock -= $deductQty;
+                            $stock->foc += $foc;
+                            $stock->save();
+
+                            $saleItems[] = $sale;
+                            $totalTax += $deductQty * $tax;
+                            $totalAmount += $deductQty * $rate;
+
+                            $batch['sale_qty'] -= $deductQty;
+                            $remainingQty -= $deductQty;
+
+                            $oldSaleBatches[$index] = $batch; // update qty
+                        }
+                    }
                 }
 
-                // Save new sale record
-                $sale = SaleReport::create([
-                    'user_id'    => $userId,
-                    'employee_id'    => $request->employee_id,
-                    'invoice_number' => $invoiceNumber,
-                    'item_name'  => $itemName,
-                    'sale_qty'   => $qty,
-                    'foc'        => $foc,
-                    'sale_rate'  => $rate,
-                    'amount'     => $amount,
-                    'tax'        => $tax,
-                    'sub_total'  => $amount + $tax,
-                    'batch_code' => $batch_code,
-                    'expiry'     => $expiry,
-                    'pack_size'  => null,
-                ]);
+                // ---------------- Step 5b: Use new FIFO stocks if remaining ----------------
+                if ($remainingQty > 0) {
+                    $stocks = Stock::where('item', $itemName)
+                        ->where('in_stock', '>', 0)
+                        ->orderBy('created_at', 'asc')
+                        ->get();
 
-                // Update stock
-                $stock->in_stock -= $qty;
-                $stock->foc += $foc;
-                $stock->save();
+                    foreach ($stocks as $stock) {
+                        if ($remainingQty <= 0) break;
 
-                $saleItems[] = $sale;
-                $totalTax += $tax;
-                $totalAmount += $amount;
+                        $deductQty = min($stock->in_stock, $remainingQty);
+
+                        $sale = SaleReport::create([
+                            'user_id'        => $userId,
+                            'employee_id'    => $request->employee_id,
+                            'invoice_number' => $invoiceNumber,
+                            'item_name'      => $itemName,
+                            'sale_qty'       => $deductQty,
+                            'foc'            => $foc,
+                            'sale_rate'      => $rate,
+                            'amount'         => $deductQty * $rate,
+                            'tax'            => $deductQty * $tax,
+                            'sub_total'      => ($deductQty * $rate) + ($deductQty * $tax),
+                            'batch_code'     => $stock->batch_code,
+                            'expiry'         => $stock->expiry,
+                            'pack_size'      => null,
+                        ]);
+
+                        $stock->in_stock -= $deductQty;
+                        $stock->foc += $foc;
+                        $stock->save();
+
+                        $saleItems[] = $sale;
+                        $totalTax += $deductQty * $tax;
+                        $totalAmount += $deductQty * $rate;
+
+                        $remainingQty -= $deductQty;
+                    }
+                }
+
+                if ($remainingQty > 0) {
+                    return redirect()->back()->with('error', "Insufficient stock for item: $itemName after batch allocation.");
+                }
             }
 
-            // ✅ Step 5: Generate PDF
+            // ---------------- Step 6: Generate PDF ----------------
             $pdf = Pdf::loadView('invoice_pdf', [
                 'invoice' => (object)[
                     'id' => $saleItems[0]->id ?? 0,
@@ -739,7 +762,6 @@ class UserController extends Controller
 
             $filename = $customer->name . '-' . $invoiceNumber . '.pdf';
             $pdfPath = 'invoices/' . $filename;
-
             Storage::makeDirectory('invoices');
             $pdf->save(storage_path('app/' . $pdfPath));
 
@@ -750,12 +772,12 @@ class UserController extends Controller
             return redirect()->back()->with('info', $request->has('invoice_number')
                 ? 'Invoice updated successfully.'
                 : 'Invoice created and PDF generated.');
+
         } catch (\Exception $e) {
             Log::error('Invoice Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
-
 
     public function items()
     {
