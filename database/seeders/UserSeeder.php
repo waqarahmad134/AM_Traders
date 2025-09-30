@@ -17,6 +17,7 @@ class UserSeeder extends Seeder
             'status' => 'active',
             'contact' => '03001234567',
             'address' => 'Lahore, Pakistan',
+            'usertype' => 'admin',
         ]);
 
         // $customers = [

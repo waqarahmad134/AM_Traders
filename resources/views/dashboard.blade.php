@@ -121,10 +121,10 @@
                         <div>
                             <h2 style="font-size: 24px;color:#000000;font-weight:600;">Hi, Adnan</h2>
                             <p class="text-dark">Here is how you're doing </p>
-                            <p class="mt-4 text-dark">Total Receivable</p>
+                            <!-- <p class="mt-4 text-dark">Total Receivable</p>
                             <h2 style="font-size:24px;color:#4A006D;font-weight:600px;">PKR 151.00</h2>
                             <p class="mt-4 text-dark">Today's Sales</p>
-                            <h2 style="font-size:24px;color:#4A006D;font-weight:600px;">PKR 400</h2>
+                            <h2 style="font-size:24px;color:#4A006D;font-weight:600px;">PKR 400</h2> -->
                         </div>
                     </div>
                 </div>
