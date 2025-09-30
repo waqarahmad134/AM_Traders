@@ -170,31 +170,6 @@
 
 
 <script>
-   
-    $(document).ready(function() {
-        $('#example1').DataTable({
-            dom: 'Bfrtip',
-            buttons: [{
-                    extend: 'copy',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                },
-                {
-                    extend: 'csv',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                },
-                {
-                    extend: 'print',
-                    exportOptions: {
-                        columns: ':not(:nth-child(6))'
-                    }
-                }
-            ]
-        });
-    });
     $(document).ready(function() {
         $('#showPass').on('click', function() {
             var passInput = $("#passInput");
