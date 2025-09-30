@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Role;
 use App\Models\SaleReport;
+use App\Models\UserPayment;
 use App\Models\User;
 use App\Models\Stock;
 use App\Models\PurchaseRecord;
@@ -745,6 +746,30 @@ class UserController extends Controller
                 }
             }
 
+                        // ---------------- Step 5c: Save UserPayment Record ----------------
+            // We save the payment record if an amount was paid or if we are tracking the due amount
+
+            // Calculate Total Invoice Value
+            $subTotalInvoice = array_sum(array_column($saleItems, 'sub_total')); // Grand total of all sale item sub_totals
+
+            $discount = $request->input('discount', 0); 
+            $amountPaid = $request->input('amount_paid', 0);
+            
+            // Grand Total Due = (Item Subtotals + Previous Balance - Discount)
+            $grandTotalDue = $subTotalInvoice + $previousBalance - $discount;
+
+            if ($subTotalInvoice > 0) {
+                UserPayment::create([
+                    'user_id' => $userId,
+                    'employee_id' => $request->employee_id,
+                    'sub_total' => $subTotalInvoice,
+                    'invoice_number' => $customer->name . '-' . $invoiceNumber,
+
+                ]);
+            }
+            // If amount paid is less than grandTotalDue, you might save a 'pending' or 'partial' payment record.
+
+
             // ---------------- Step 6: Generate PDF ----------------
             $pdf = Pdf::loadView('invoice_pdf', [
                 'invoice' => (object)[
@@ -785,31 +810,105 @@ class UserController extends Controller
         return view('items', ['items' => $data]);
     }
 
-    public function store_items(Request $request)
-{
-    // ✅ Validate input
-    $validated = $request->validate([
-        'item_name' => 'required|string|max:255',
-        'status'    => 'required|in:active,inactive',
-    ]);
-
-    try {
-        $item = new Item();
-        $item->item_name = $validated['item_name'];
-        $item->status    = $validated['status'];
-        $item->save();
-
-        return redirect()->route('items')
-                         ->with('info', 'Item added successfully');
-
-    } catch (\Exception $e) {
-        // Log error for debugging
-        \Log::error('Item store failed: '.$e->getMessage());
-
-        return redirect()->back()
-                         ->withInput()
-                         ->with('error', 'Failed to add item. Please try again.');
+    public function payments(Request $request)
+    {
+        $query = UserPayment::query();
+    
+        if ($request->filled('start_date')) {
+            $query->whereDate('paid_at', '>=', $request->start_date);
+        }
+    
+        if ($request->filled('end_date')) {
+            $query->whereDate('paid_at', '<=', $request->end_date);
+        }
+    
+        $data = $query->with('employee')->orderBy('paid_at', 'desc')->get();
+    
+        // Count Paid / Unpaid
+        $paidCount = $data->where('status', 'paid')->count();
+        $unpaidCount = $data->where('status', 'unpaid')->count();
+    
+        // Sum Paid / Unpaid Amount
+        $paidTotal = $data->where('status', 'paid')->sum('sub_total');
+        $unpaidTotal = $data->where('status', 'unpaid')->sum('sub_total');
+    
+        return view('payments', compact('data', 'paidCount', 'unpaidCount', 'paidTotal', 'unpaidTotal'));
     }
-}
+    
+
+    
+
+    public function payments_update(Request $request)
+    {
+        // Log the incoming request for debugging
+        Log::info('Payment update request:', $request->all());
+
+        try {
+            // Validate the request
+            $request->validate([
+                'payment_id' => 'required|exists:user_payments,id',
+                'payment_method' => 'nullable|string|max:255',
+                'status' => 'required|in:paid,unpaid',
+                'paid_at' => 'nullable|date',
+            ]);
+
+            // Find the payment record
+            $payment = UserPayment::findOrFail($request->payment_id);
+
+            // Log the current payment state before update
+            Log::info('Current Payment Record:', $payment->toArray());
+
+            // Update only allowed fields
+            $payment->update([
+                'payment_method' => $request->payment_method,
+                'status' => $request->status,
+                'paid_at' => $request->paid_at,
+            ]);
+
+            // Log after successful update
+            Log::info('Payment updated successfully:', $payment->toArray());
+
+            return redirect()->route('payments')->with('info', 'Payment updated successfully.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation Error:', $e->errors());
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Payment update failed:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->back()->with('error', 'Something went wrong while updating payment.');
+        }
+    }
+
+
+    public function store_items(Request $request)
+    {
+        // ✅ Validate input
+        $validated = $request->validate([
+            'item_name' => 'required|string|max:255',
+            'status'    => 'required|in:active,inactive',
+        ]);
+
+        try {
+            $item = new Item();
+            $item->item_name = $validated['item_name'];
+            $item->status    = $validated['status'];
+            $item->save();
+
+            return redirect()->route('items')
+                            ->with('info', 'Item added successfully');
+
+        } catch (\Exception $e) {
+            // Log error for debugging
+            \Log::error('Item store failed: '.$e->getMessage());
+
+            return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Failed to add item. Please try again.');
+        }
+    }
+
 
 }

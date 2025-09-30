@@ -44,8 +44,7 @@
                     <div class="body">
                         <div class="table-responsive">
                         <div class="row mb-3">
-                    <div class="col-md-8"></div>
-                    <div class="col-md-4 text-right">
+                        <div class="col-md-12 text-right">
                         <form method="GET" action="{{ route('sale_record.index') }}" class="form-inline justify-content-end">
 
                             <!-- Start Date -->

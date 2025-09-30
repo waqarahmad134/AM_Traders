@@ -90,6 +90,10 @@ Route::post('add_user', [App\Http\Controllers\UserController::class, 'add_user']
 Route::get('edit_user/{id}', [App\Http\Controllers\UserController::class, 'edit_user'])->name('edit_user');
 Route::post('update_user/{id}', [App\Http\Controllers\UserController::class, 'update_user'])->name('update_user');
 
+// payments
+Route::get('payments', [App\Http\Controllers\UserController::class, 'payments'])->name('payments');
+Route::post('payments/update', [App\Http\Controllers\UserController::class, 'payments_update'])->name('payments.update');
+
 
 Route::post('roles', [App\Http\Controllers\UserController::class, 'role_store'])->name('roles.store');
 
@@ -110,7 +114,6 @@ Route::post('sale_record', [App\Http\Controllers\SaleRecordController::class, 's
 Route::get('sale_record/update_status/{id}', [App\Http\Controllers\SaleRecordController::class, 'updateStatus'])->name('sale_record.updateStatus');
 Route::put('sale_record/{id}', [App\Http\Controllers\SaleRecordController::class, 'update'])->name('sale_record.update');
 Route::delete('sale_record/{id}', [App\Http\Controllers\SaleRecordController::class, 'destroy'])->name('sale_record.delete');
-
 
 // purchase record
 
