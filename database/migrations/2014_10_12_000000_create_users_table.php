@@ -25,11 +25,12 @@ return new class extends Migration
             $table->text('area')->nullable();
             $table->text('address')->nullable();
             $table->string('usertype')->default('customer'); 
-            $table->string('role')->nullable(); 
+            $table->unsignedBigInteger('role_id')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
         });
     }
 

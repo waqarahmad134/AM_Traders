@@ -48,7 +48,10 @@
                 <div class="card">
                     <div class="header d-flex justify-content-between pb-0 mb-0">
                         <h2>Employee Management</h2>
-                        <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalCenter">Add New Employee</button>
+                        <div>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#roleModalCenter">Add New Role</button>
+                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModalCenter">Add New Employee</button>
+                        </div>
                     </div>
                     <div class="body">
                         <div class="table-responsive">
@@ -103,6 +106,42 @@
 
 
 
+<div class="modal fade" id="roleModalCenter" tabindex="-1" role="dialog" aria-labelledby="roleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <form method="POST" id="myForm" action="{{ route('roles.store') }}" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="roleModalCenterTitle">Add Role</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div id="error" class="alert alert-danger" style="display:none;"></div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label>Role Name</label>
+                            <input name="name" type="text" class="form-control" placeholder="Enter Role Name" required>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <label>Description (Optional)</label>
+                            <textarea name="description" class="form-control" placeholder="Enter Role Description"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModel()" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Role</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <form method="POST" id="myForm" action="{{route('add_user')}}" enctype="multipart/form-data">
@@ -151,6 +190,20 @@
                             <option value="employee">Employee</option>
                         </select>
                     </div>
+
+                  <div class="form-group mt-3">
+                    <label for="role_id">User Role</label>
+                    <select name="role_id" class="form-control" required>
+                        <option value="">Select Role</option>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->id }}" 
+                                {{ isset($user) && $user->role_id == $role->id ? 'selected' : '' }}>
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModel()"  data-dismiss="modal">Close</button>

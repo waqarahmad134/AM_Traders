@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\Role;
 use App\Models\SaleReport;
 use App\Models\User;
 use App\Models\Stock;
@@ -43,7 +44,13 @@ class UserController extends Controller
         $data = User::where('usertype', 'employee')
             ->orderBy('created_at', 'desc')
             ->get();
-        return view('admin.employees', ['data' => $data]);
+
+        $roles = Role::all();
+
+        return view('admin.employees', [
+            'data' => $data,
+            'roles' => $roles
+        ]);
     }
 
     public function customers()
@@ -138,6 +145,7 @@ class UserController extends Controller
             $user = new User();
             $user->name = $request->firstName . ' ' . $request->lastName;
             $user->email = $request->email;
+            $user->role_id = $request->role_id;
             $user->contact = $request->leyka_donor_phone;
             $user->usertype = $request->usertype;
             $user->address = $request->address;
@@ -567,6 +575,20 @@ class UserController extends Controller
     //         return redirect()->back()->with('error', 'Something went wrong. Please try again.');
     //     }
     // }
+
+    public function role_store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:roles,name',
+        ]);
+
+        Role::create([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return redirect()->back()->with('success', 'Role added successfully!');
+    }
 
     public function store_invoice(Request $request)
     {

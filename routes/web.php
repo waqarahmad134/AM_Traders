@@ -90,7 +90,13 @@ Route::post('add_user', [App\Http\Controllers\UserController::class, 'add_user']
 Route::get('edit_user/{id}', [App\Http\Controllers\UserController::class, 'edit_user'])->name('edit_user');
 Route::post('update_user/{id}', [App\Http\Controllers\UserController::class, 'update_user'])->name('update_user');
 
+
+Route::post('roles', [App\Http\Controllers\UserController::class, 'role_store'])->name('roles.store');
+
+
+
 Route::get('create_invoice', [App\Http\Controllers\UserController::class, 'create_invoice'])->name('create_invoice');
+
 
 Route::get('invoice_pdf', function () {
     return view('invoice_pdf'); 
