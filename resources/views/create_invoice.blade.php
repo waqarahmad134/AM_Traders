@@ -58,7 +58,6 @@
                                     @endif
                                 @endforeach
                             </select>
-                            <span id="employeeError" style="color: red; display: none;">Please select employee.</span>
                         </div>
                     </div>
                     <div class="body">
@@ -215,10 +214,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemInput = document.getElementById('itemInput');
     itemInput.addEventListener('input', function() {
         const value = this.value.trim();
-        console.log("🚀 ~ value:", value)
         const datalist = document.getElementById('itemsList');
         const selectedOption = datalist.querySelector(`option[value="${value}"]`);
-        console.log("🚀 ~ selectedOption:", selectedOption)
         const inStocksParagraph = document.getElementById('inStocks');
         const batch_code = document.getElementById('batch_code');
         const expiry = document.getElementById('expiry');
@@ -470,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const employeeSelect = document.getElementById('employee_id');
         employeeSelect.value = firstMatch.employee_id;  
-        employeeSelect.disabled = true;                 
+        employeeSelect.setAttribute('readonly', 'true'); // optional flag
 
 
 
@@ -493,97 +490,106 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = '';
 
         // USE a simple for loop to add rows
-        for (let i = 0; i < reports.length; i++) {
-            const rep = reports[i];
+        // for (let i = 0; i < reports.length; i++) {
+        //     const rep = reports[i];
 
-            const itemObj = {
-                itemName: rep.item_name,
-                qty: rep.sale_qty,
-                rate: rep.sale_rate,
-                foc: rep.foc || 0,
-                amount: rep.amount,
-                tax: rep.tax || 0,
-                prevBalance: rep.previous_balance || 0
-            };
+        //     const itemObj = {
+        //         itemName: rep.item_name,
+        //         qty: rep.sale_qty,
+        //         rate: rep.sale_rate,
+        //         foc: rep.foc || 0,
+        //         amount: rep.amount,
+        //         tax: rep.tax || 0,
+        //         prevBalance: rep.previous_balance || 0
+        //     };
 
-            // push to selectedItems array
-            selectedItems.push(itemObj);
-
-
-            // build DOM row
-            const tr = document.createElement('tr');
-
-            const tdName = document.createElement('td'); tdName.textContent = itemObj.itemName;
-            const tdQty = document.createElement('td'); tdQty.textContent = itemObj.qty;
-            const tdRate = document.createElement('td'); tdRate.textContent = itemObj.rate;
-            const tdFoc = document.createElement('td'); tdFoc.textContent = itemObj.foc;
-            const tdAmount = document.createElement('td'); tdAmount.textContent = itemObj.amount;
-            const tdTax = document.createElement('td'); tdTax.textContent = itemObj.tax;
-            const tdPrev = document.createElement('td'); tdPrev.textContent = itemObj.prevBalance;
-
-            const tdAct = document.createElement('td');
-            const btnRemove = document.createElement('button');
-            btnRemove.type = 'button';
-            btnRemove.className = 'btn btn-danger btn-sm remove-item';
-            btnRemove.textContent = 'Remove';
-            tdAct.appendChild(btnRemove);
-
-            // hidden input so backend receives items[]
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'items[]';
-            hiddenInput.value = JSON.stringify(itemObj);
-
-            // append tds and hidden to tr
-            tr.appendChild(tdName);
-            tr.appendChild(tdQty);
-            tr.appendChild(tdRate);
-            tr.appendChild(tdFoc);
-            tr.appendChild(tdAmount);
-            tr.appendChild(tdTax);
-            tr.appendChild(tdPrev);
-            tr.appendChild(tdAct);
-            tr.appendChild(hiddenInput);
-
-            // append row to tbody
-            tbody.appendChild(tr);
-
-            // remove handler: remove row DOM and remove from selectedItems
-            (function(localItem, localTr){
-                btnRemove.addEventListener('click', function () {
-                    // remove DOM row
-                    if (localTr && localTr.parentNode) localTr.parentNode.removeChild(localTr);
-
-                    // remove first matching item from selectedItems
-                    for (let k = 0; k < selectedItems.length; k++) {
-                        const it = selectedItems[k];
-                        if (it.itemName === localItem.itemName && Number(it.qty) === Number(localItem.qty) && Number(it.rate) === Number(localItem.rate)) {
-                            selectedItems.splice(k, 1);
-                            break;
-                        }
-                    }
-                });
-            })(itemObj, tr);
-        } // end for loop
-
-        // Show first item in detail panel (so user can use it for edits/add)
-        // const firstItem = reports[0];
-        // if (firstItem) {
-        //     itemDetailsDiv.style.display = 'block';
-        //     selectedItemName.textContent = firstItem.item_name + "1waqar";
-        //     qtyInput.value = firstItem.sale_qty;
-        //     rateInput.value = firstItem.sale_rate;
-        //     focInput.value = firstItem.foc || 0;
-        //     amountInput.value = firstItem.amount;
-        // }
-
-        // Show ALL items in detail panel (not just index 0)
+        //     // push to selectedItems array
+        //     selectedItems.push(itemObj);
 
 
-// Show ALL items in detail panel as a table
+        //     // build DOM row
+        //     const tr = document.createElement('tr');
+
+        //     const tdName = document.createElement('td'); tdName.textContent = itemObj.itemName;
+        //     const tdQty = document.createElement('td'); tdQty.textContent = itemObj.qty;
+        //     const tdRate = document.createElement('td'); tdRate.textContent = itemObj.rate;
+        //     const tdFoc = document.createElement('td'); tdFoc.textContent = itemObj.foc;
+        //     const tdAmount = document.createElement('td'); tdAmount.textContent = itemObj.amount;
+        //     const tdTax = document.createElement('td'); tdTax.textContent = itemObj.tax;
+        //     const tdPrev = document.createElement('td'); tdPrev.textContent = itemObj.prevBalance;
+
+        //     const tdAct = document.createElement('td');
+        //     const btnRemove = document.createElement('button');
+        //     btnRemove.type = 'button';
+        //     btnRemove.className = 'btn btn-danger btn-sm remove-item';
+        //     btnRemove.textContent = 'Remove';
+        //     tdAct.appendChild(btnRemove);
+
+        //     // hidden input so backend receives items[]
+        //     const hiddenInput = document.createElement('input');
+        //     hiddenInput.type = 'hidden';
+        //     hiddenInput.name = 'items[]';
+        //     hiddenInput.value = JSON.stringify(itemObj);
+
+        //     // append tds and hidden to tr
+        //     tr.appendChild(tdName);
+        //     tr.appendChild(tdQty);
+        //     tr.appendChild(tdRate);
+        //     tr.appendChild(tdFoc);
+        //     tr.appendChild(tdAmount);
+        //     tr.appendChild(tdTax);
+        //     tr.appendChild(tdPrev);
+        //     tr.appendChild(tdAct);
+        //     tr.appendChild(hiddenInput);
+
+        //     // append row to tbody
+        //     tbody.appendChild(tr);
+
+        //     // remove handler: remove row DOM and remove from selectedItems
+        //     (function(localItem, localTr){
+        //         btnRemove.addEventListener('click', function () {
+        //             // remove DOM row
+        //             if (localTr && localTr.parentNode) localTr.parentNode.removeChild(localTr);
+
+        //             // remove first matching item from selectedItems
+        //             for (let k = 0; k < selectedItems.length; k++) {
+        //                 const it = selectedItems[k];
+        //                 if (it.itemName === localItem.itemName && Number(it.qty) === Number(localItem.qty) && Number(it.rate) === Number(localItem.rate)) {
+        //                     selectedItems.splice(k, 1);
+        //                     break;
+        //                 }
+        //             }
+        //         });
+        //     })(itemObj, tr);
+        // } 
+       // display-only rows for reference
+for (let i = 0; i < reports.length; i++) {
+    const rep = reports[i];
+
+    const tr = document.createElement('tr');
+
+    const tdName = document.createElement('td'); tdName.textContent = rep.item_name;
+    const tdQty = document.createElement('td'); tdQty.textContent = rep.sale_qty;
+    const tdRate = document.createElement('td'); tdRate.textContent = rep.sale_rate;
+    const tdFoc = document.createElement('td'); tdFoc.textContent = rep.foc || 0;
+    const tdAmount = document.createElement('td'); tdAmount.textContent = rep.amount;
+    const tdTax = document.createElement('td'); tdTax.textContent = rep.tax || 0;
+    const tdPrev = document.createElement('td'); tdPrev.textContent = rep.previous_balance || 0;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdQty);
+    tr.appendChild(tdRate);
+    tr.appendChild(tdFoc);
+    tr.appendChild(tdAmount);
+    tr.appendChild(tdTax);
+    tr.appendChild(tdPrev);
+
+    tbody.appendChild(tr);
+}
+
+
 itemDetailsDiv.style.display = 'block';
 
-// Build table header
 let tableHTML = `
     <table class="table table-bordered">
         <thead>
@@ -600,7 +606,6 @@ let tableHTML = `
         <tbody>
 `;
 
-// Loop through all items and add rows
 for (let i = 0; i < reports.length; i++) {
     const rep = reports[i];
     tableHTML += `
@@ -640,32 +645,11 @@ itemDetailsDiv.innerHTML = tableHTML;
 });
 </script>
 
-<!-- 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        window.validateEmployee = function() {
-            const empSelect = document.getElementById('employee_id');
-            const errorSpan = document.getElementById('employeeError');
-
-            if (!empSelect || !empSelect.value) {
-                toastr.error("Please select an employee before submitting!", "Validation Error", {
-                closeButton: true,
-                progressBar: true,
-                timeOut: 3000
-            });
-            empSelect?.focus();
-            return false; 
-            }
-            errorSpan.style.display = 'none';
-            return true;
-        }
-    });
-</script> -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     window.validateEmployee = function(form) {
         const empSelect = document.getElementById('employee_id');
-        const errorSpan = document.getElementById('employeeError');
+        console.log("🚀 ~ empSelect:", empSelect)
 
         if (!empSelect || !empSelect.value) {
             toastr.error("Please select an employee before submitting!", "Validation Error", {
@@ -677,7 +661,6 @@ document.addEventListener("DOMContentLoaded", function() {
             return false; 
         }
 
-        errorSpan.style.display = 'none';
 
         // Disable submit button to prevent multiple clicks
         const submitBtn = form.querySelector('button[type="submit"]');

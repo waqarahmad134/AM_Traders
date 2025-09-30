@@ -570,7 +570,7 @@ class UserController extends Controller
 
     public function store_invoice(Request $request)
     {
-        return $request->all();
+        // return $request->all();
         try {
             // ✅ Step 1: Validate invoice date
             $validator = Validator::make($request->all(), [

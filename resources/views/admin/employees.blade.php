@@ -59,7 +59,7 @@
                                         <th>Name</th>
                                         <th>Phone</th>
                                         <th>Email</th>
-                                        <th>Created At</th>
+                                        <th>Joining Date</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
