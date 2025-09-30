@@ -704,7 +704,7 @@ class UserController extends Controller
                 if ($remainingQty > 0) {
                     $stocks = Stock::where('item', $itemName)
                         ->where('in_stock', '>', 0)
-                        ->orderBy('created_at', 'asc')
+                        ->orderBy('expiry', 'asc') // earliest expiry first
                         ->get();
 
                     foreach ($stocks as $stock) {

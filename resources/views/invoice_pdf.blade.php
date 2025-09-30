@@ -68,9 +68,10 @@
         <td style="width:60%; text-align:right; border:none;">
             <h1 style="margin:0; font-size:22px;">AM TRADERS</h1>
             <p style="margin:0; font-size:14px; line-height:1.4;">
-                66-Block B Model Town, Lahore, Pakistan<br>
-                0345-5170181 | amtraders123@gmail.com
+                66-Kusar Block Awan Town Multan Road, Lahore, Pakistan<br>
+                0334-3538725 | 0341-0022521 
             </p>
+            <p style="margin:0; font-size:14px; line-height:1.4;">amtraders725@gmail.com</p>
         </td>
     </tr>
 </table>
